@@ -238,11 +238,11 @@ static int oem_synaptics_ts_probe(struct i2c_client *client, const struct i2c_de
 	if(get_boot_mode() == MSM_BOOT_MODE__NORMAL)
 	{
 		for (i = 0; i < NR_CPUS; i++){
-            TPD_ERR("boot_time: [synaptics_ts_probe] CPU%d is %s\n",i,cpu_is_offline(i)?"offline":"online");
-            if (cpu_online(i) && (i != smp_processor_id()))
-                break;
-	    }
-        queue_delayed_work_on(i != NR_CPUS?i:0,optimize_data.workqueue,&(optimize_data.work),msecs_to_jiffies(300));
+			TPD_ERR("boot_time: [synaptics_ts_probe] CPU%d is %s\n",i,cpu_is_offline(i)?"offline":"online");
+			if (cpu_online(i) && (i != smp_processor_id()))
+				break;
+		}
+		queue_delayed_work_on(i != NR_CPUS?i:0,optimize_data.workqueue,&(optimize_data.work),msecs_to_jiffies(300));
 	}else{
 		queue_delayed_work_on(0,optimize_data.workqueue,&(optimize_data.work),msecs_to_jiffies(300));
 	}
@@ -277,10 +277,10 @@ struct synaptics_ts_data {
 	uint32_t irq_flags;
 	struct delayed_work dwork;
 #ifdef SUPPORT_FOR_COVER_ESD
-    bool cover_reject;
-    bool key_back;
-    bool key_app_select;
-    struct hrtimer timer;
+	bool cover_reject;
+	bool key_back;
+	bool key_app_select;
+	struct hrtimer timer;
 #endif
 	uint32_t using_polling;
 	struct delayed_work get_touchkey_work;
@@ -312,7 +312,7 @@ struct synaptics_ts_data {
 
 static int tc_hw_pwron(struct synaptics_ts_data *ts)
 {
-	int rc;
+	int rc = 0;
 
 	//enable the 2v8 power
 	if (!IS_ERR(ts->vdd_2v8)) {
@@ -341,7 +341,7 @@ static int tc_hw_pwron(struct synaptics_ts_data *ts)
 		TPD_DEBUG("synaptics:enable the reset_gpio\n");
 		gpio_direction_output(ts->reset_gpio, 1);
 	}
-    msleep(500);
+	msleep(500);
 	return rc;
 }
 
@@ -457,7 +457,7 @@ static int synaptics_read_register_map(struct synaptics_ts_data *ts)
 			", F51_CUSTOM_QUERY_BASE, F51_CUSTOM_CMD_BASE, F51_CUSTOM_CTRL_BASE, F51_CUSTOM_DATA_BASE);
 
 #if TP_TEST_ENABLE
-    ret = synaptics_rmi4_i2c_read_block(ts->client, 0xE9, 4, &(buf[0x0]));
+	ret = synaptics_rmi4_i2c_read_block(ts->client, 0xE9, 4, &(buf[0x0]));
 	F54_ANALOG_QUERY_BASE = buf[0];
 	F54_ANALOG_COMMAND_BASE = buf[1];
 	F54_ANALOG_CONTROL_BASE = buf[2];
@@ -499,10 +499,10 @@ static int synaptics_enable_interrupt(struct synaptics_ts_data *ts, int enable)
 
 	return 0;
 
-    ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x0);
+	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x0);
 	if( ret < 0 ) {
 		TPDTM_DMESG("%s: select page failed ret = %d\n",__func__,
-		    ret);
+			ret);
 		return -1;
 	}
 	if( enable ) {
@@ -697,120 +697,120 @@ extern void int_touch(void);
 static void int_virtual_key(struct synaptics_ts_data *ts )
 {
 
-    int ret;
-    int button_key;
-    long time =0 ;
-    bool key_up_report = false;
+	int ret;
+	int button_key;
+	long time =0 ;
+	bool key_up_report = false;
 
-    ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x02 );
-    if (ret < 0) {
-        TPD_ERR("%s: Failed to change page 2!!\n",
-                __func__);
-        return;
-    }
+	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x02 );
+	if (ret < 0) {
+		TPD_ERR("%s: Failed to change page 2!!\n",
+				__func__);
+		return;
+	}
 
-    button_key = synaptics_rmi4_i2c_read_byte(ts->client,0x00);
-    if (6 == (++log_count % 12))
-        printk("%s	button_key:%d   pre_btn_state:%d\n",__func__,button_key,ts->pre_btn_state);
-    if((button_key & 0x01) && !(ts->pre_btn_state & 0x01))//back
-    {
-	key_appselect_pressed = true;
-    }else if(!(button_key & 0x01) && (ts->pre_btn_state & 0x01)){
-	key_appselect_pressed = false;
-	key_up_report = true;
-    }
+	button_key = synaptics_rmi4_i2c_read_byte(ts->client,0x00);
+	if (6 == (++log_count % 12))
+		printk("%s	button_key:%d   pre_btn_state:%d\n",__func__,button_key,ts->pre_btn_state);
+	if((button_key & 0x01) && !(ts->pre_btn_state & 0x01))//back
+	{
+		key_appselect_pressed = true;
+	} else if(!(button_key & 0x01) && (ts->pre_btn_state & 0x01)) {
+		key_appselect_pressed = false;
+		key_up_report = true;
+	}
 
-    if((button_key & 0x02) && !(ts->pre_btn_state & 0x02))//menu
-    {
-	key_back_pressed = true;
-    }else if(!(button_key & 0x02) && (ts->pre_btn_state & 0x02)){
-	key_back_pressed = false;
-	key_up_report = true;
-    }
+	if((button_key & 0x02) && !(ts->pre_btn_state & 0x02))//menu
+	{
+		key_back_pressed = true;
+	} else if(!(button_key & 0x02) && (ts->pre_btn_state & 0x02)) {
+		key_back_pressed = false;
+		key_up_report = true;
+	}
 
-    if((button_key & 0x04) && !(ts->pre_btn_state & 0x04))//home
-    {
-        input_report_key(ts->input_dev, KEY_HOMEPAGE, 1);//KEY_HOMEPAGE
-        input_sync(ts->input_dev);
-    }else if(!(button_key & 0x04) && (ts->pre_btn_state & 0x04)){
-        input_report_key(ts->input_dev, KEY_HOMEPAGE, 0);
-        input_sync(ts->input_dev);
-    }
-    if(key_up_report){
-        reinit_completion(&key_cm);
-        time = wait_for_completion_timeout(&key_cm,msecs_to_jiffies(touchkey_wait_time));
-        if (!time){
-		check_key_down = false;
+	if((button_key & 0x04) && !(ts->pre_btn_state & 0x04))//home
+	{
+		input_report_key(ts->input_dev, KEY_HOMEPAGE, 1);//KEY_HOMEPAGE
+		input_sync(ts->input_dev);
+	}else if(!(button_key & 0x04) && (ts->pre_btn_state & 0x04)){
+		input_report_key(ts->input_dev, KEY_HOMEPAGE, 0);
+		input_sync(ts->input_dev);
+	}
+	if(key_up_report){
+		reinit_completion(&key_cm);
+		time = wait_for_completion_timeout(&key_cm,msecs_to_jiffies(touchkey_wait_time));
+		if (!time){
+			check_key_down = false;
+			int_touch();
+		}
+	}else{
+		check_key_down = true;
 		int_touch();
 	}
-    }else{
-        check_key_down = true;
-        int_touch();
-    }
-    ts->pre_btn_state = button_key & 0x07;
-    ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x00);
-    if (ret < 0) {
-        TPD_ERR("%s: Failed to change page 2!!\n",
-                __func__);
-        return;
-    }
-    return;
+	ts->pre_btn_state = button_key & 0x07;
+	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x00);
+	if (ret < 0) {
+		TPD_ERR("%s: Failed to change page 2!!\n",
+				__func__);
+		return;
+	}
+	return;
 }
 #endif
 static void int_key(struct synaptics_ts_data *ts )
 {
 
-    int ret;
+	int ret;
 	int button_key;
 
-    ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x02 );
-    if (ret < 0) {
-        TPD_ERR("%s: line[%d]Failed to change page!!\n",
-                __func__,__LINE__);
-        return;
-    }
+	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x02 );
+	if (ret < 0) {
+		TPD_ERR("%s: line[%d]Failed to change page!!\n",
+				__func__,__LINE__);
+		return;
+	}
 
-    button_key = synaptics_rmi4_i2c_read_byte(ts->client,0x00);
-    if (6 == (++log_count % 12))
-        TPD_ERR("touch_key[0x%x],touchkey_state[0x%x]\n",button_key,ts->pre_btn_state);
-    if (!is_report_key)
-        return;
-    if((button_key & 0x01) && !(ts->pre_btn_state & 0x01))//back
-    {
-        input_report_key(ts->input_dev, REP_KEY_BACK, 1);
-        input_sync(ts->input_dev);
-    }else if(!(button_key & 0x01) && (ts->pre_btn_state & 0x01)){
-        input_report_key(ts->input_dev, REP_KEY_BACK, 0);
-        input_sync(ts->input_dev);
-    }
+	button_key = synaptics_rmi4_i2c_read_byte(ts->client,0x00);
+	if (6 == (++log_count % 12))
+		TPD_ERR("touch_key[0x%x],touchkey_state[0x%x]\n",button_key,ts->pre_btn_state);
+	if (!is_report_key)
+		return;
+	if((button_key & 0x01) && !(ts->pre_btn_state & 0x01))//back
+	{
+		input_report_key(ts->input_dev, REP_KEY_BACK, 1);
+		input_sync(ts->input_dev);
+	}else if(!(button_key & 0x01) && (ts->pre_btn_state & 0x01)){
+		input_report_key(ts->input_dev, REP_KEY_BACK, 0);
+		input_sync(ts->input_dev);
+	}
 
-    if((button_key & 0x02) && !(ts->pre_btn_state & 0x02))//menu
-    {
-        input_report_key(ts->input_dev, REP_KEY_MENU, 1);
-        input_sync(ts->input_dev);
-    }else if(!(button_key & 0x02) && (ts->pre_btn_state & 0x02)){
-        input_report_key(ts->input_dev, REP_KEY_MENU, 0);
-        input_sync(ts->input_dev);
-    }
+	if((button_key & 0x02) && !(ts->pre_btn_state & 0x02))//menu
+	{
+		input_report_key(ts->input_dev, REP_KEY_MENU, 1);
+		input_sync(ts->input_dev);
+	}else if(!(button_key & 0x02) && (ts->pre_btn_state & 0x02)){
+		input_report_key(ts->input_dev, REP_KEY_MENU, 0);
+		input_sync(ts->input_dev);
+	}
 
-    if((button_key & 0x04) && !(ts->pre_btn_state & 0x04))//home
-    {
-        input_report_key(ts->input_dev, KEY_HOMEPAGE, 1);//KEY_HOMEPAGE
-        input_sync(ts->input_dev);
-    }else if(!(button_key & 0x04) && (ts->pre_btn_state & 0x04)){
-        input_report_key(ts->input_dev, KEY_HOMEPAGE, 0);
-        input_sync(ts->input_dev);
-    }
+	if((button_key & 0x04) && !(ts->pre_btn_state & 0x04))//home
+	{
+		input_report_key(ts->input_dev, KEY_HOMEPAGE, 1);//KEY_HOMEPAGE
+		input_sync(ts->input_dev);
+	}else if(!(button_key & 0x04) && (ts->pre_btn_state & 0x04)){
+		input_report_key(ts->input_dev, KEY_HOMEPAGE, 0);
+		input_sync(ts->input_dev);
+	}
 
-    ts->pre_btn_state = button_key & 0x07;
+	ts->pre_btn_state = button_key & 0x07;
 	//input_sync(ts->input_dev);
-    ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x00);
-    if (ret < 0) {
-        TPD_ERR("%s: line[%d]Failed to change page!!\n",
-                __func__,__LINE__);
-        return;
-    }
-    return;
+	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x00);
+	if (ret < 0) {
+		TPD_ERR("%s: line[%d]Failed to change page!!\n",
+				__func__,__LINE__);
+		return;
+	}
+	return;
 }
 #ifdef SUPPORT_FOR_COVER_ESD
 #define TIMER_NS    100000000
@@ -819,78 +819,78 @@ static bool is_in_cover = false;
 static void int_key_cover(struct synaptics_ts_data *ts )
 {
 
-    int ret;
+	int ret;
 	int button_key;
-    if (!is_report_key)
-        return;
-    ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x02 );
-    if (ret < 0) {
-        TPD_ERR("%s: line[%d]Failed to change page!!\n",
-                __func__,__LINE__);
-        return;
-    }
+	if (!is_report_key)
+		return;
+	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x02 );
+	if (ret < 0) {
+		TPD_ERR("%s: line[%d]Failed to change page!!\n",
+				__func__,__LINE__);
+		return;
+	}
 
-    button_key = synaptics_rmi4_i2c_read_byte(ts->client,0x00);
-    TPD_DEBUG("button_key[%d]\n",button_key);
-    if (button_key == 0x03){
-        is_in_cover = true;
-        ts->key_back = false;
-        ts->key_app_select = false;
-        ret = hrtimer_cancel(&ts->timer);
-        TPD_DEBUG("timer cancel ret[%s]\n",ret?"active":"no active");  
-    }
-    if (button_key == 0x00){
-        is_in_cover = false;
-    }
-    if (is_in_cover){
-        ts->pre_btn_state = button_key & 0x07;
-        return;
-    }
-    if((button_key & 0x01) && !(ts->pre_btn_state & 0x01))//back
-    {
-        hrtimer_start(&ts->timer, ktime_set(0, TIMER_NS), HRTIMER_MODE_REL);
-        ts->key_back = true;
-    }else if(!(button_key & 0x01) && (ts->pre_btn_state & 0x01)){
-        ts->key_back = false;
-        input_report_key(ts->input_dev, REP_KEY_BACK, 0);
-        input_sync(ts->input_dev);
-    }
+	button_key = synaptics_rmi4_i2c_read_byte(ts->client,0x00);
+	TPD_DEBUG("button_key[%d]\n",button_key);
+	if (button_key == 0x03){
+		is_in_cover = true;
+		ts->key_back = false;
+		ts->key_app_select = false;
+		ret = hrtimer_cancel(&ts->timer);
+		TPD_DEBUG("timer cancel ret[%s]\n",ret?"active":"no active");
+	}
+	if (button_key == 0x00){
+		is_in_cover = false;
+	}
+	if (is_in_cover){
+		ts->pre_btn_state = button_key & 0x07;
+		return;
+	}
+	if((button_key & 0x01) && !(ts->pre_btn_state & 0x01))//back
+	{
+		hrtimer_start(&ts->timer, ktime_set(0, TIMER_NS), HRTIMER_MODE_REL);
+		ts->key_back = true;
+	}else if(!(button_key & 0x01) && (ts->pre_btn_state & 0x01)){
+		ts->key_back = false;
+		input_report_key(ts->input_dev, REP_KEY_BACK, 0);
+		input_sync(ts->input_dev);
+	}
 
-    if((button_key & 0x02) && !(ts->pre_btn_state & 0x02))//menu
-    {
-        hrtimer_start(&ts->timer, ktime_set(0, TIMER_NS), HRTIMER_MODE_REL);
-        ts->key_app_select = true;
-    }else if(!(button_key & 0x02) && (ts->pre_btn_state & 0x02)){
-        ts->key_app_select = false;
-        input_report_key(ts->input_dev, REP_KEY_MENU, 0);
-        input_sync(ts->input_dev);
-    }
+	if((button_key & 0x02) && !(ts->pre_btn_state & 0x02))//menu
+	{
+		hrtimer_start(&ts->timer, ktime_set(0, TIMER_NS), HRTIMER_MODE_REL);
+		ts->key_app_select = true;
+	}else if(!(button_key & 0x02) && (ts->pre_btn_state & 0x02)){
+		ts->key_app_select = false;
+		input_report_key(ts->input_dev, REP_KEY_MENU, 0);
+		input_sync(ts->input_dev);
+	}
 
-    ts->pre_btn_state = button_key & 0x07;
+	ts->pre_btn_state = button_key & 0x07;
 	//input_sync(ts->input_dev);
-    ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x00);
-    if (ret < 0) {
-        TPD_ERR("%s: line[%d]Failed to change page!!\n",
-                __func__,__LINE__);
-        return;
-    }
-    return;
+	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x00);
+	if (ret < 0) {
+		TPD_ERR("%s: line[%d]Failed to change page!!\n",
+				__func__,__LINE__);
+		return;
+	}
+	return;
 }
 static enum hrtimer_restart process_key_timer(struct hrtimer *timer)
 {
 	struct synaptics_ts_data *ts = container_of(timer, struct synaptics_ts_data, timer);
 
-    TPD_DEBUG("timer enter!key_back[%d],key_app_select[%d]\n",ts->key_back,ts->key_app_select);
-    if (ts->key_back){
-        ts->key_back = false;
-        input_report_key(ts->input_dev, REP_KEY_BACK, 1);
-        input_sync(ts->input_dev);
-    }
-    else if (ts->key_app_select){
-        ts->key_back = false;
-        input_report_key(ts->input_dev, REP_KEY_MENU, 1);
-        input_sync(ts->input_dev);
-    }
+	TPD_DEBUG("timer enter!key_back[%d],key_app_select[%d]\n",ts->key_back,ts->key_app_select);
+	if (ts->key_back){
+		ts->key_back = false;
+		input_report_key(ts->input_dev, REP_KEY_BACK, 1);
+		input_sync(ts->input_dev);
+	}
+	else if (ts->key_app_select){
+		ts->key_back = false;
+		input_report_key(ts->input_dev, REP_KEY_MENU, 1);
+		input_sync(ts->input_dev);
+	}
 	return HRTIMER_NORESTART;
 }
 static void process_key_timer_init(struct synaptics_ts_data *ts )
@@ -901,42 +901,39 @@ static void process_key_timer_init(struct synaptics_ts_data *ts )
 #endif
 static void synaptics_ts_report(struct synaptics_ts_data *ts )
 {
-    int ret;
-    uint8_t status = 0;
-    uint8_t inte = 0;
-    if( ts->enable_remote) {
-        goto END;
-    }
-    ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x00 );
-    ret = synaptics_rmi4_i2c_read_word(ts->client, 0x13);
+	int ret;
+	uint8_t status = 0;
+	uint8_t inte = 0;
+	if( ts->enable_remote) {
+		goto END;
+	}
+	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x00 );
+	ret = synaptics_rmi4_i2c_read_word(ts->client, 0x13);
 
-    if( ret < 0 ) {
-        TPDTM_DMESG("Synaptic:ret = %d\n", ret);
-        synaptics_hard_reset(ts);
-        goto END;
-    }
-    status = ret & 0xff;
-    inte = (ret & 0x7f00)>>8;
-    if(status) {
-        int_state(ts);
-        //goto END;
-    }
-    if( inte & 0x10) {
-#ifdef CONFIG_BOEFFLA_TOUCH_KEY_CONTROL
-		btkc_touch_button();
-#endif
+	if( ret < 0 ) {
+		TPDTM_DMESG("Synaptic:ret = %d\n", ret);
+		synaptics_hard_reset(ts);
+		goto END;
+	}
+	status = ret & 0xff;
+	inte = (ret & 0x7f00)>>8;
+	if(status) {
+		int_state(ts);
+		//goto END;
+	}
+	if( inte & 0x10) {
 #if (defined SUPPORT_FOR_COVER_ESD)
-        if (ts->cover_reject)
-            int_key_cover(ts);
-        else
-            int_key(ts);
+		if (ts->cover_reject)
+			int_key_cover(ts);
+		else
+			int_key(ts);
 #elif (defined SUPPORT_VIRTUAL_KEY)
-        if (virtual_key_enable)
-            int_virtual_key(ts);
-        else
-            int_key(ts);
+		if (virtual_key_enable)
+			int_virtual_key(ts);
+		else
+			int_key(ts);
 #endif
-    }
+	}
 END:
 	return;
 }
@@ -970,8 +967,8 @@ static int	synaptics_input_init(struct synaptics_ts_data *ts)
 		TPD_ERR("synaptics_ts_probe: Failed to allocate input device\n");
 		return ret;
 	}
-    ts->input_dev->name = TPD_DEVICE;;
-    ts->input_dev->dev.parent = &ts->client->dev;
+	ts->input_dev->name = TPD_DEVICE;;
+	ts->input_dev->dev.parent = &ts->client->dev;
 	set_bit(EV_SYN, ts->input_dev->evbit);
 	set_bit(EV_KEY, ts->input_dev->evbit);
 	set_bit(KEY_BACK, ts->input_dev->keybit);
@@ -1050,8 +1047,8 @@ static ssize_t synaptics_s1302_fw_write(struct file *file, const char __user *pa
 {
 	int val = 0;
 	struct synaptics_ts_data *ts = tc_g;
-    if (NULL == tc_g)
-        return -EINVAL;
+	if (NULL == tc_g)
+		return -EINVAL;
 	TPD_ERR("start update ******* fw_name:%s\n",tc_g->fw_name);
 	if (t > 2)
 		return -EINVAL;
@@ -1103,17 +1100,17 @@ static ssize_t synaptics_s1302_key_reverse_write(struct file *file, const char _
 	}
 
 	sscanf(buf, "%d", &ret);
-    TPD_ERR("%s key_reverse:%d\n",__func__,ret);
+	TPD_ERR("%s key_reverse:%d\n",__func__,ret);
 	if( (ret == 0 )||(ret == 1) )
-    {
-        key_reverse = ret;
-    }
-    return t;
+	{
+		key_reverse = ret;
+	}
+	return t;
 }
 static int synaptics_s1302_key_reverse_show(struct seq_file *seq, void *offset)
 {
-    seq_printf(seq, "s1302 menu key in %s\n",key_reverse?("right"):("left"));
-    return 0 ;
+	seq_printf(seq, "s1302 menu key in %s\n",key_reverse?("right"):("left"));
+	return 0 ;
 }
 static int synaptics_s1302_key_reverse_open(struct inode *inode, struct file *file)
 {
@@ -1124,7 +1121,7 @@ const struct file_operations proc_reverse_key =
 	.owner		= THIS_MODULE,
 	.open		= synaptics_s1302_key_reverse_open,
 	.read		= seq_read,
-	.write      = synaptics_s1302_key_reverse_write,
+	.write	  = synaptics_s1302_key_reverse_write,
 	.llseek 	= seq_lseek,
 	.release	= single_release,
 };
@@ -1133,16 +1130,16 @@ static int synaptics_s1302_radd_show(struct seq_file *seq, void *offset)
 {
 	int ret;
 	char buffer[256];
-    int i;
+	int i;
 
 	struct synaptics_ts_data *ts = tc_g;
-    printk("%s page=0x%x,address=0x%x,block=0x%x\n",__func__,page,address,block);
-    ret = synaptics_rmi4_i2c_write_byte(ts->client,0xff,page);
-    ret = synaptics_rmi4_i2c_read_block(ts->client,address,block,buffer);
-    for (i=0;i < block;i++)
-    {
-        printk("buffer[%d]=0x%x\n",i,buffer[i]);
-    }
+	printk("%s page=0x%x,address=0x%x,block=0x%x\n",__func__,page,address,block);
+	ret = synaptics_rmi4_i2c_write_byte(ts->client,0xff,page);
+	ret = synaptics_rmi4_i2c_read_block(ts->client,address,block,buffer);
+	for (i=0;i < block;i++)
+	{
+		printk("buffer[%d]=0x%x\n",i,buffer[i]);
+	}
 	seq_printf(seq,"page:0x%x;address:0x%x;buff[%d]:[0]0x%x,[1]0x%x,[2]0x%x,[3]0x%x\n",\
 		page,address,block,buffer[0],buffer[1],buffer[2],buffer[3]);
 	return 0;
@@ -1151,39 +1148,39 @@ static int synaptics_s1302_radd_show(struct seq_file *seq, void *offset)
 static ssize_t synaptics_s1302_radd_write(struct file *file, const char __user *buffer, size_t count, loff_t *ppos)
 {
 	int buf[128];
-    int ret,i;
+	int ret,i;
 	struct synaptics_ts_data *ts = tc_g;
-    int temp_block,wbyte;
-    char reg[30];
+	int temp_block,wbyte;
+	char reg[30];
 
-    ret = sscanf(buffer,"%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x",\
-    &buf[0],&buf[1],&buf[2],&buf[3],&buf[4],&buf[5],&buf[6],&buf[7],&buf[8],&buf[9],\
-    &buf[10],&buf[11],&buf[12],&buf[13],&buf[14],&buf[15],&buf[16],&buf[17]);
-    for (i = 0;i < ret;i++)
-    {
-        printk("buf[i]=0x%x,",buf[i]);
-    }
-    printk("\n");
-    page= buf[0];
-    address = buf[1];
-    temp_block = buf[2];
-    wbyte = buf[3];
-    if (0xFF == temp_block)//the  mark is to write register else read register
-    {
-        for (i=0;i < wbyte;i++)
-        {
-            reg[i] = (char)buf[4+i];
-        }
-        ret = synaptics_rmi4_i2c_write_byte(ts->client,0xff,page);
-        ret = synaptics_rmi4_i2c_write_block(ts->client,(char)address,wbyte,reg);
-        printk("%s write page=0x%x,address=0x%x\n",__func__,page,address);
-        for (i=0;i < wbyte;i++)
-        {
-            printk("reg=0x%x\n",reg[i]);
-        }
-    }
-    else
-        block = temp_block;
+	ret = sscanf(buffer,"%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x",\
+	&buf[0],&buf[1],&buf[2],&buf[3],&buf[4],&buf[5],&buf[6],&buf[7],&buf[8],&buf[9],\
+	&buf[10],&buf[11],&buf[12],&buf[13],&buf[14],&buf[15],&buf[16],&buf[17]);
+	for (i = 0;i < ret;i++)
+	{
+		printk("buf[i]=0x%x,",buf[i]);
+	}
+	printk("\n");
+	page= buf[0];
+	address = buf[1];
+	temp_block = buf[2];
+	wbyte = buf[3];
+	if (0xFF == temp_block)//the  mark is to write register else read register
+	{
+		for (i=0;i < wbyte;i++)
+		{
+			reg[i] = (char)buf[4+i];
+		}
+		ret = synaptics_rmi4_i2c_write_byte(ts->client,0xff,page);
+		ret = synaptics_rmi4_i2c_write_block(ts->client,(char)address,wbyte,reg);
+		printk("%s write page=0x%x,address=0x%x\n",__func__,page,address);
+		for (i=0;i < wbyte;i++)
+		{
+			printk("reg=0x%x\n",reg[i]);
+		}
+	}
+	else
+		block = temp_block;
 	return count;
 }
 static int synaptics_s1302_radd_open(struct inode *inode, struct file *file)
@@ -1192,16 +1189,16 @@ static int synaptics_s1302_radd_open(struct inode *inode, struct file *file)
 }
 const struct file_operations proc_radd =
 {
-    .owner      = THIS_MODULE,
-    .open       = synaptics_s1302_radd_open,
-    .read       = seq_read,
-    .write      = synaptics_s1302_radd_write,
-    .llseek     = seq_lseek,
-    .release    = single_release,
+	.owner		= THIS_MODULE,
+	.open		= synaptics_s1302_radd_open,
+	.read		= seq_read,
+	.write		= synaptics_s1302_radd_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
 };
 static ssize_t synaptics_s1302_reset_write (struct file *file, const char *buffer, size_t count, loff_t *ppos)
 {
-    int ret,write_flag;
+	int ret,write_flag;
 	struct synaptics_ts_data *ts = tc_g;
 
 	if(ts->loading_fw) {
@@ -1209,30 +1206,30 @@ static ssize_t synaptics_s1302_reset_write (struct file *file, const char *buffe
 		return count;
 	}
 
-    ret = sscanf(buffer,"%x",&write_flag);
-    TPD_ERR("%s write %d\n",__func__,write_flag);
-    if (1 == write_flag)
-    {
-        ret = synaptics_soft_reset(ts);
-    }
-    else if(2 == write_flag)
-    {
-        synaptics_hard_reset(ts);
-    }
-    else if(3 == write_flag)
-    {
-        is_report_key = true;
-    }
-    else if(4 == write_flag)
-    {
-        is_report_key = false;
-    }
+	ret = sscanf(buffer,"%x",&write_flag);
+	TPD_ERR("%s write %d\n",__func__,write_flag);
+	if (1 == write_flag)
+	{
+		ret = synaptics_soft_reset(ts);
+	}
+	else if(2 == write_flag)
+	{
+		synaptics_hard_reset(ts);
+	}
+	else if(3 == write_flag)
+	{
+		is_report_key = true;
+	}
+	else if(4 == write_flag)
+	{
+		is_report_key = false;
+	}
 	return count;
 }
 static int synaptics_s1302_reset_show(struct seq_file *seq, void *offset)
 {
-    seq_printf(seq, "1:[soft reset],2:[hard reset]\n3:[enable report key],4:[disable report key]\n");
-    return 0 ;
+	seq_printf(seq, "1:[soft reset],2:[hard reset]\n3:[enable report key],4:[disable report key]\n");
+	return 0 ;
 }
 
 static int synaptics_s1302_reset_open(struct inode *inode, struct file *file)
@@ -1242,26 +1239,26 @@ static int synaptics_s1302_reset_open(struct inode *inode, struct file *file)
 
 const struct file_operations proc_reset =
 {
-    .owner      = THIS_MODULE,
-    .open       = synaptics_s1302_reset_open,
-    .read       = seq_read,
-    .write      = synaptics_s1302_reset_write,
-    .llseek     = seq_lseek,
-    .release    = single_release,
+	.owner		= THIS_MODULE,
+	.open		= synaptics_s1302_reset_open,
+	.read		= seq_read,
+	.write		= synaptics_s1302_reset_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
 };
 static ssize_t synaptics_s1302_debug_write (struct file *file, const char *buffer, size_t count, loff_t *ppos)
 {
-    int ret,write_flag;
+	int ret,write_flag;
 
-    ret = sscanf(buffer,"%x",&write_flag);
-    TPD_ERR("%s write %d\n",__func__,write_flag);
-    tp_debug = write_flag?1:0;
+	ret = sscanf(buffer,"%x",&write_flag);
+	TPD_ERR("%s write %d\n",__func__,write_flag);
+	tp_debug = write_flag?1:0;
 	return count;
 }
 static int synaptics_s1302_debug_show(struct seq_file *seq, void *offset)
 {
-    seq_printf(seq, "s1302 debug log is %s!\n",tp_debug?"on":"off");
-    return 0 ;
+	seq_printf(seq, "s1302 debug log is %s!\n",tp_debug?"on":"off");
+	return 0 ;
 }
 
 static int synaptics_s1302_debug_open(struct inode *inode, struct file *file)
@@ -1271,12 +1268,12 @@ static int synaptics_s1302_debug_open(struct inode *inode, struct file *file)
 
 const struct file_operations proc_debug =
 {
-    .owner      = THIS_MODULE,
-    .open       = synaptics_s1302_debug_open,
-    .read       = seq_read,
-    .write      = synaptics_s1302_debug_write,
-    .llseek     = seq_lseek,
-    .release    = single_release,
+	.owner		= THIS_MODULE,
+	.open		= synaptics_s1302_debug_open,
+	.read		= seq_read,
+	.write		= synaptics_s1302_debug_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
 };
 
 static ssize_t synaptics_s1302_wait_time_write (struct file *file, const char *buffer, size_t count, loff_t *ppos)
@@ -1302,12 +1299,12 @@ static int synaptics_s1302_wait_time_open(struct inode *inode, struct file *file
 
 const struct file_operations setting_wait_time_proc_fops =
 {
-	.owner      = THIS_MODULE,
-	.open       = synaptics_s1302_wait_time_open,
-	.read       = seq_read,
-	.write      = synaptics_s1302_wait_time_write,
-	.llseek     = seq_lseek,
-	.release    = single_release,
+	.owner		= THIS_MODULE,
+	.open		= synaptics_s1302_wait_time_open,
+	.read		= seq_read,
+	.write		= synaptics_s1302_wait_time_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
 };
 
 
@@ -1371,12 +1368,12 @@ static void synaptics_rawdata_get(struct synaptics_ts_data *ts,char *buffer)
 }
 static int synaptics_key_strength_show(struct seq_file *seq, void *offset)
 {
-    char buffer[128];
-    struct synaptics_ts_data *ts = tc_g;
+	char buffer[128];
+	struct synaptics_ts_data *ts = tc_g;
 
-    memset(buffer,0,sizeof(buffer));
+	memset(buffer,0,sizeof(buffer));
 	mutex_lock(&ts->mutex);
-    synaptics_rawdata_get(ts,buffer);
+	synaptics_rawdata_get(ts,buffer);
 	mutex_unlock(&ts->mutex);
 	seq_printf(seq, "%s\n",buffer);
 	return 0;
@@ -1553,12 +1550,12 @@ static ssize_t synaptics_s1302_virtual_key_enable_write(struct file *file, const
 	}else{
 		virtual_key_enable = false;
 	}
-    return t;
+	return t;
 }
 static int synaptics_s1302_virtual_key_enable_show(struct seq_file *seq, void *offset)
 {
-    seq_printf(seq, "s1302 virtual key %s\n",virtual_key_enable?("enabled"):("disabled"));
-    return 0 ;
+	seq_printf(seq, "s1302 virtual key %s\n",virtual_key_enable?("enabled"):("disabled"));
+	return 0 ;
 }
 static int synaptics_s1302_virtual_key_enable_open(struct inode *inode, struct file *file)
 {
@@ -1569,29 +1566,29 @@ const struct file_operations proc_virtual_key =
 	.owner		= THIS_MODULE,
 	.open		= synaptics_s1302_virtual_key_enable_open,
 	.read		= seq_read,
-	.write      = synaptics_s1302_virtual_key_enable_write,
+	.write		= synaptics_s1302_virtual_key_enable_write,
 	.llseek 	= seq_lseek,
 	.release	= single_release,
 };
 
 static int synaptics_s1302_proc(void)
 {
-    struct proc_dir_entry *proc_entry=0;
+	struct proc_dir_entry *proc_entry=0;
 
-    struct proc_dir_entry *procdir = proc_mkdir( "s1302", NULL );
-    //for firmware version
-    proc_entry = proc_create_data("fw_update", 0666, procdir,&proc_firmware_update,NULL);
-    proc_entry = proc_create_data("key_rep", 0666, procdir,&proc_reverse_key,NULL);
-    proc_entry = proc_create_data("radd", 0666, procdir,&proc_radd,NULL);
-    proc_entry = proc_create_data("reset", 0666, procdir,&proc_reset,NULL);
-    proc_entry = proc_create_data("debug", 0666, procdir,&proc_debug,NULL);
-    proc_entry = proc_create_data("strength", 0444, procdir,&proc_key_strength,NULL);
-    proc_entry = proc_create_data("virtual_key", 0666, procdir,&proc_virtual_key,NULL);
-    proc_entry = proc_create_data("touchkey_baseline_test", 0644, procdir, &tp_baseline_image_proc_fops,NULL);
-    proc_entry = proc_create_data("setting_wait_time_test", 0644, procdir, &setting_wait_time_proc_fops,NULL);
-    TPD_ERR("create nodes is successe!\n");
+	struct proc_dir_entry *procdir = proc_mkdir( "s1302", NULL );
+	//for firmware version
+	proc_entry = proc_create_data("fw_update", 0666, procdir,&proc_firmware_update,NULL);
+	proc_entry = proc_create_data("key_rep", 0666, procdir,&proc_reverse_key,NULL);
+	proc_entry = proc_create_data("radd", 0666, procdir,&proc_radd,NULL);
+	proc_entry = proc_create_data("reset", 0666, procdir,&proc_reset,NULL);
+	proc_entry = proc_create_data("debug", 0666, procdir,&proc_debug,NULL);
+	proc_entry = proc_create_data("strength", 0444, procdir,&proc_key_strength,NULL);
+	proc_entry = proc_create_data("virtual_key", 0666, procdir,&proc_virtual_key,NULL);
+	proc_entry = proc_create_data("touchkey_baseline_test", 0644, procdir, &tp_baseline_image_proc_fops,NULL);
+	proc_entry = proc_create_data("setting_wait_time_test", 0644, procdir, &setting_wait_time_proc_fops,NULL);
+	TPD_ERR("create nodes is successe!\n");
 
-    return 0;
+	return 0;
 }
 /******************************end****************************/
 
@@ -1877,26 +1874,26 @@ static int synapitcs_ts_update(struct i2c_client *client, const uint8_t *data, u
 }
 static int synaptics_soft_reset(struct synaptics_ts_data *ts)
 {
-    int ret;
+	int ret;
 
-    ret = i2c_smbus_write_byte_data(ts->client, F01_RMI_CMD_BASE, 0x01);
-    if (ret < 0){
-    TPD_ERR("reset error ret=%d\n",ret);
-    }
-    TPD_ERR("%s !!!\n",__func__);
-    return ret;
+	ret = i2c_smbus_write_byte_data(ts->client, F01_RMI_CMD_BASE, 0x01);
+	if (ret < 0){
+	TPD_ERR("reset error ret=%d\n",ret);
+	}
+	TPD_ERR("%s !!!\n",__func__);
+	return ret;
 }
 static void synaptics_hard_reset(struct synaptics_ts_data *ts)
 {
-    return; //WAR 1302 hw error[RST short issue]
-    if(ts->reset_gpio > 0)
-    {
-        gpio_set_value(ts->reset_gpio,0);
-        msleep(5);
-        gpio_set_value(ts->reset_gpio,1);
-        msleep(100);
-        TPD_ERR("%s !!!\n",__func__);
-    }
+	return; //WAR 1302 hw error[RST short issue]
+	if(ts->reset_gpio > 0)
+	{
+		gpio_set_value(ts->reset_gpio,0);
+		msleep(5);
+		gpio_set_value(ts->reset_gpio,1);
+		msleep(100);
+		TPD_ERR("%s !!!\n",__func__);
+	}
 
 }
 static int synaptics_parse_dts(struct device *dev, struct synaptics_ts_data *ts)
@@ -1921,7 +1918,7 @@ static int synaptics_parse_dts(struct device *dev, struct synaptics_ts_data *ts)
 	}
 
 	/***********power regulator_get****************/
-	
+
 	ts->vdd_2v8 = regulator_get(&ts->client->dev, "vdd_2v8");
 	if( IS_ERR(ts->vdd_2v8) ){
 		rc = PTR_ERR(ts->vdd_2v8);
@@ -1948,7 +1945,7 @@ static int synaptics_parse_dts(struct device *dev, struct synaptics_ts_data *ts)
 			rc = gpio_request(ts->en3v_gpio, "s1302_en3v");
 			if(rc)
 				TPD_ERR("unable to request gpio [%d]\n", ts->en3v_gpio);
-            retval = gpio_direction_output(ts->en3v_gpio,1);
+			retval = gpio_direction_output(ts->en3v_gpio,1);
 		}
 	}
 #ifdef SUPPORT_FOR_COVER_ESD
@@ -1968,7 +1965,7 @@ static int synaptics_dsx_pinctrl_init(struct synaptics_ts_data *ts)
 	ts->pinctrl = devm_pinctrl_get((ts->dev));
 	if (IS_ERR_OR_NULL(ts->pinctrl)) {
 		retval = PTR_ERR(ts->pinctrl);
-        printk("%s %d error!\n",__func__,__LINE__);
+		printk("%s %d error!\n",__func__,__LINE__);
 		goto err_pinctrl_get;
 	}
 
@@ -1976,15 +1973,15 @@ static int synaptics_dsx_pinctrl_init(struct synaptics_ts_data *ts)
 		= pinctrl_lookup_state(ts->pinctrl, "pmx_tk_active");
 	if (IS_ERR_OR_NULL(ts->pinctrl_state_active)) {
 		retval = PTR_ERR(ts->pinctrl_state_active);
-        printk("%s %d error!\n",__func__,__LINE__);
+		printk("%s %d error!\n",__func__,__LINE__);
 		goto err_pinctrl_lookup;
 	}
-    
+
 	ts->pinctrl_state_suspend
 		= pinctrl_lookup_state(ts->pinctrl, "pmx_tk_suspend");
 	if (IS_ERR_OR_NULL(ts->pinctrl_state_suspend)) {
 		retval = PTR_ERR(ts->pinctrl_state_suspend);
-        printk("%s %d !\n",__func__,__LINE__);
+		printk("%s %d !\n",__func__,__LINE__);
 		goto err_pinctrl_lookup;
 	}
 	return 0;
@@ -2020,7 +2017,7 @@ static int choice_gpio_function(struct synaptics_ts_data *ts)
 	}
 	TPD_ERR("synaptic:ts->irq is %d\n",ts->irq);
 	if(!gpio_get_value(ts->irq_gpio)){
-                msleep(2);
+				msleep(2);
 		if(!gpio_get_value(ts->irq_gpio))
 			ts->using_polling = 1;
 		else
@@ -2058,18 +2055,18 @@ static int synaptics_ts_probe(struct i2c_client *client, const struct i2c_device
 	i2c_set_clientdata(client, ts);
 	ts->dev = &client->dev;
 	ts->loading_fw = false;
-    tc_g = ts;
+	tc_g = ts;
 #if (defined SUPPORT_VIRTUAL_KEY)
-    init_completion(&key_cm);
+	init_completion(&key_cm);
 #endif
-    ret = synaptics_dsx_pinctrl_init(ts);
-    if (!ret && ts->pinctrl) {
-        ret = pinctrl_select_state(ts->pinctrl,
-                ts->pinctrl_state_active);
-        }
+	ret = synaptics_dsx_pinctrl_init(ts);
+	if (!ret && ts->pinctrl) {
+		ret = pinctrl_select_state(ts->pinctrl,
+				ts->pinctrl_state_active);
+	}
 
 	synaptics_parse_dts(&client->dev, ts);
-    /***power_init*****/
+	/***power_init*****/
 	ret = tc_power(ts, 1);
 	if( ret < 0 )
 		TPD_ERR("regulator_enable is called\n");
@@ -2097,9 +2094,9 @@ static int synaptics_ts_probe(struct i2c_client *client, const struct i2c_device
 	synaptics_rmi4_i2c_read_block(ts->client, F34_FLASH_CTRL_BASE, 4, buf);
 	CURRENT_FIRMWARE_ID = (buf[0]<<24) | (buf[1]<<16) | (buf[2]<<8) | buf[3];
 	TPD_ERR("CURRENT_FIRMWARE_ID = 0x%x\n", CURRENT_FIRMWARE_ID);
-    sprintf(ts->fw_id,"0x%x",CURRENT_FIRMWARE_ID);
+	sprintf(ts->fw_id,"0x%x",CURRENT_FIRMWARE_ID);
 
-	memset(ts->fw_name,TP_FW_NAME_MAX_LEN,0);
+	memset(ts->fw_name, 0, TP_FW_NAME_MAX_LEN);
 	strcpy(ts->fw_name,"tp/fw_synaptics_touchkey.img");
 	TPD_DEBUG("synatpitcs_fw: fw_name = %s \n",ts->fw_name);
 
@@ -2108,7 +2105,7 @@ static int synaptics_ts_probe(struct i2c_client *client, const struct i2c_device
 	bootloader_mode = synaptics_rmi4_i2c_read_byte(ts->client, F01_RMI_DATA_BASE);
 	bootloader_mode = bootloader_mode&0x40;
 	TPD_ERR("before fw update,bootloader_mode = 0x%x\n", bootloader_mode);
-    if(0x40 == bootloader_mode){
+	if(0x40 == bootloader_mode){
 		force_update = 1;
 		TPD_ERR("This FW need to be updated!\n");
 	} else {
@@ -2119,12 +2116,9 @@ static int synaptics_ts_probe(struct i2c_client *client, const struct i2c_device
 	if(ret < 0) {
 		TPD_ERR("synaptics_input_init failed!\n");
 	}
-<<<<<<< HEAD
-=======
 	ret = synaptics_enable_interrupt(ts, 1);
 	if(ret < 0)
 		TPD_ERR("%s enable interrupt error ret=%d\n",__func__,ret);
->>>>>>> 676b413... touchscreen: kang from oneplus3T
 #if defined(CONFIG_FB)
 	ts->suspended = 0;
 	ts->fb_notif.notifier_call = fb_notifier_callback;
@@ -2156,9 +2150,9 @@ static int synaptics_ts_probe(struct i2c_client *client, const struct i2c_device
 	}
 
 #ifdef SUPPORT_FOR_COVER_ESD
-    process_key_timer_init(ts);
+	process_key_timer_init(ts);
 #endif
-    synaptics_s1302_proc();
+	synaptics_s1302_proc();
 #ifdef CONFIG_SYNAPTIC_RED
 	premote_data = remote_alloc_panel_data_s1302();
 	if(premote_data) {
@@ -2169,7 +2163,7 @@ static int synaptics_ts_probe(struct i2c_client *client, const struct i2c_device
 		premote_data->irq			= client->irq;
 		premote_data->enable_remote = &(ts->enable_remote);
 		register_remote_device_s1302(premote_data);
-    }
+	}
 #endif
 	TPDTM_DMESG("synaptics_ts_probe s1302: normal end\n");
 	return 0;

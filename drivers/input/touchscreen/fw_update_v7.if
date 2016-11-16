@@ -505,7 +505,7 @@ struct synaptics_rmi4_fwu_handle {
 	const unsigned char *image;
 	unsigned char *image_name;
 	unsigned int image_size;
-    unsigned char bl_reset_add;
+	unsigned char bl_reset_add;
 	struct image_metadata img;
 	struct register_offset off;
 	struct block_count blkcount;
@@ -515,7 +515,7 @@ struct synaptics_rmi4_fwu_handle {
 	struct synaptics_rmi4_fn_desc f35_fd;
 	struct workqueue_struct *fwu_workqueue;
 	struct work_struct fwu_work;
-    struct i2c_client *client;
+	struct i2c_client *client;
 };
 
 static struct synaptics_rmi4_fwu_handle *fwu;
@@ -722,7 +722,7 @@ static void fwu_parse_image_header_10(void)
 		case CORE_CODE_CONTAINER:
 			fwu->img.ui_firmware.data = content;
 			fwu->img.ui_firmware.size = length;
-            TPD_DEBUG("%s ui_firmware_pointer[%p]\n",__func__,fwu->img.ui_firmware.data);
+			TPD_DEBUG("%s ui_firmware_pointer[%p]\n",__func__,fwu->img.ui_firmware.data);
 			break;
 		case UI_CONFIG_CONTAINER:
 		case CORE_CONFIG_CONTAINER:
@@ -795,7 +795,7 @@ static int fwu_read_flash_status(void)
 	if (retval < 0) {
 		return retval;
 	}
-    //TPD_ERR("flash_status_address[0x%x] status[0x%x]\n",fwu->f34_fd.data_base_addr + fwu->off.flash_status,status);
+	//TPD_ERR("flash_status_address[0x%x] status[0x%x]\n",fwu->f34_fd.data_base_addr + fwu->off.flash_status,status);
 	fwu->in_bl_mode = status >> 7;
 
 	if (fwu->bl_version == BL_V5)
@@ -818,7 +818,7 @@ static int fwu_read_flash_status(void)
 				__func__,command);
 		return retval;
 	}
-    //TPD_ERR("flash_command_address[0x%x] command[0x%x]\n",fwu->f34_fd.data_base_addr + fwu->off.flash_cmd,command);
+	//TPD_ERR("flash_command_address[0x%x] command[0x%x]\n",fwu->f34_fd.data_base_addr + fwu->off.flash_cmd,command);
 
 	if (fwu->bl_version == BL_V5)
 		fwu->command = command & MASK_4BIT;
@@ -1247,14 +1247,14 @@ static int fwu_write_f34_v7_blocks(unsigned char *block_ptr,
 	unsigned short max_transfer;
 	unsigned short remaining = block_cnt;
 	unsigned short block_number = 0;
-    int send_cnt = 1;
+	int send_cnt = 1;
 
 	base = fwu->f34_fd.data_base_addr;
 
-    retval = fwu_wait_for_idle(WRITE_WAIT_MS, true);
-    if (retval < 0) {
-        TPD_ERR("%s: line[%d]Failed to wait for idle status\n",__func__, __LINE__);
-    }
+	retval = fwu_wait_for_idle(WRITE_WAIT_MS, true);
+	if (retval < 0) {
+		TPD_ERR("%s: line[%d]Failed to wait for idle status\n",__func__, __LINE__);
+	}
 
 	retval = fwu_write_f34_partition_id(command);
 	if (retval < 0)
@@ -1279,7 +1279,7 @@ static int fwu_write_f34_v7_blocks(unsigned char *block_ptr,
 		else
 			transfer = remaining;
 
-        TPD_DEBUG("send_cnt[%d],transfer_block[%d],remaining[%d]\n",send_cnt++,transfer,remaining);
+		TPD_DEBUG("send_cnt[%d],transfer_block[%d],remaining[%d]\n",send_cnt++,transfer,remaining);
 		length[0] = (unsigned char)(transfer & MASK_8BIT);
 		length[1] = (unsigned char)(transfer >> 8);
 
@@ -1395,7 +1395,7 @@ static int fwu_read_f34_v7_blocks(unsigned short block_cnt,
 
 		retval = synaptics_rmi4_i2c_read_block(fwu->client,
 				base + fwu->off.payload,
-                transfer * fwu->block_size,&fwu->read_config_buf[index]);
+				transfer * fwu->block_size,&fwu->read_config_buf[index]);
 		if (retval < 0) {
 			TPD_ERR("%s: Failed to read block data (%d blocks remaining)\n",
 					__func__, remaining);
@@ -1565,7 +1565,7 @@ static int fwu_write_ui_configuration(void)
 static int fwu_write_flash_configuration(void)
 {
 	int retval;
-    
+
 	TPD_ERR("%s: enter!!\n",__func__);
 	fwu->config_area = FLASH_CONFIG_AREA;
 	fwu->config_data = fwu->img.fl_config.data;
@@ -1584,15 +1584,15 @@ static int fwu_write_flash_configuration(void)
 
 	retval = fwu_wait_for_idle(ERASE_WAIT_MS, false);
 	if (retval < 0){
-        TPD_ERR("Erase configuration wait Idle status timeout!\n");
+		TPD_ERR("Erase configuration wait Idle status timeout!\n");
 		return retval;
-    }
+	}
 
 	retval = fwu_write_configuration();
 	if (retval < 0){
-        TPD_ERR("write configuration error!\n");
+		TPD_ERR("write configuration error!\n");
 		return retval;
-    }
+	}
 	TPD_ERR("%s: finish!!\n",__func__);
 	return 0;
 }
@@ -1650,7 +1650,7 @@ static int fwu_do_reflash(void)
 		retval = fwu_check_bl_configuration_size();
 		if (retval < 0)
 			return retval;
-        }
+	}
 
 	retval = fwu_erase_all();
 	if (retval < 0)
@@ -1696,7 +1696,7 @@ static int scan_pdt(void)
 	retval = synaptics_rmi4_i2c_read_block(fwu->client,0xE3,sizeof(add_buf),add_buf);
 	fwu->bl_reset_add = add_buf[1];
 
-    return retval;
+	return retval;
 }
 
 static int fwu_read_f34_serialization(void)
@@ -1705,8 +1705,8 @@ static int fwu_read_f34_serialization(void)
 	unsigned char base;
 	unsigned char length[2];
 	unsigned short block_number = 0;
-        unsigned char buffer[32];
-        //static bool judge_version = true;
+	unsigned char buffer[32];
+	//static bool judge_version = true;
 	base = fwu->f34_fd.data_base_addr;
 
 	fwu->config_area = PM_CONFIG_AREA;
@@ -1755,7 +1755,7 @@ static int fwu_read_f34_serialization(void)
 				__func__);
 		return -ENOMEM;
 	}
-        */
+	*/
 	retval = synaptics_rmi4_i2c_read_block(fwu->client,
 			base + fwu->off.payload,fwu->blkcount.pm_config,buffer);
 	if (retval < 0) {
@@ -1765,11 +1765,11 @@ static int fwu_read_f34_serialization(void)
 	}
 	TPD_ERR("%s:buffer5[0x%02x]\n",__func__,buffer[5]);
 	if(!(buffer[0] || buffer[1] || buffer[2] || buffer[4] || buffer[5])){
-              TPD_ERR("%s:tp hardware version is 15801\n",__func__);
-              return  1;
-        }else{
-              TPD_ERR("%s:tp hardware version is 15801vb\n",__func__);
-              return 0;
+		TPD_ERR("%s:tp hardware version is 15801\n",__func__);
+		return 1;
+	} else {
+		TPD_ERR("%s:tp hardware version is 15801vb\n",__func__);
+		return 0;
 	}
 }
 
@@ -1798,12 +1798,12 @@ int fwu_start_reflash_check(const unsigned char *fw_image, struct i2c_client *cl
 		TPD_ERR("%s: fwu_read_f34_v7_queries\n",__func__);
 		return retval;
 	}
-        TPD_DEBUG("%s: fwu_read_f34_serialization\n",__func__);
+	TPD_DEBUG("%s: fwu_read_f34_serialization\n",__func__);
 
 	retval = fwu_read_f34_serialization();
-        kfree(fwu);
-        return retval;
-	}
+	kfree(fwu);
+	return retval;
+}
 
 int fwu_start_reflash(const unsigned char *fw_image, struct i2c_client *client)
 {
@@ -1824,18 +1824,18 @@ int fwu_start_reflash(const unsigned char *fw_image, struct i2c_client *client)
 
 	retval = fwu_read_flash_status();
 	if (retval < 0)
-                goto exit_free_fwu;
-  
+		goto exit_free_fwu;
+
 	msleep(INT_DISABLE_WAIT_MS);
 
 	retval = fwu_write_f34_command(CMD_ENABLE_FLASH_PROG);
 	if (retval < 0)
-                goto exit_free_fwu;
+		goto exit_free_fwu;
 
 	retval = fwu_wait_for_idle(ENABLE_WAIT_MS, false);
-	if (retval < 0){
-                goto exit_free_fwu;
-        }
+	if (retval < 0)
+		goto exit_free_fwu;
+
 	if (!fwu->in_bl_mode) {
 		kfree(fwu);
 		fwu = NULL;
@@ -1867,7 +1867,7 @@ int fwu_start_reflash(const unsigned char *fw_image, struct i2c_client *client)
 		retval = fwu_do_reflash();
 	}
 	retval = fwu_write_ui_configuration();
-	synaptics_rmi4_i2c_write_byte(fwu->client,fwu->bl_reset_add,0x01);//reset tp   
+	synaptics_rmi4_i2c_write_byte(fwu->client,fwu->bl_reset_add,0x01);//reset tp
 	return retval;
 
 exit_free_fwu:
