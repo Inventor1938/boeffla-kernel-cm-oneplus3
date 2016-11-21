@@ -111,15 +111,13 @@ static int do_i2c_transfer(struct i2c_client *client, struct i2c_msg *msg)
 		if (i2c_transfer(client->adapter, msg, 1) == 1)
 			break;
 		dev_err(&client->dev,
-				"%s: I2C retry %d\n",
-				__func__, retry + 1);
+			"%s: I2C retry %d\n", __func__, retry + 1);
 		msleep(20);
 	}
 
 	if (retry == SYN_I2C_RETRY_TIMES) {
 		dev_err(&client->dev,
-				"%s: I2C transfer over retry limit\n",
-				__func__);
+			"%s: I2C transfer over retry limit\n", __func__);
 		return -EIO;
 	}
 
@@ -127,7 +125,7 @@ static int do_i2c_transfer(struct i2c_client *client, struct i2c_msg *msg)
 }
 
 static int check_buffer(unsigned char **buffer, unsigned short *buffer_size,
-		unsigned short length)
+			unsigned short length)
 {
 	if (*buffer_size < length) {
 		if (*buffer_size)
@@ -146,10 +144,10 @@ static int generic_read(struct i2c_client *client, unsigned short length)
 	int retval;
 	struct i2c_msg msg[] = {
 		{
-			.addr = client->addr,
-			.flags = I2C_M_RD,
-			.len = length,
-		}
+		 .addr = client->addr,
+		 .flags = I2C_M_RD,
+		 .len = length,
+		 }
 	};
 
 	check_buffer(&buffer.read, &buffer.read_size, length);
@@ -165,11 +163,11 @@ static int generic_write(struct i2c_client *client, unsigned short length)
 	int retval;
 	struct i2c_msg msg[] = {
 		{
-			.addr = client->addr,
-			.flags = 0,
-			.len = length,
-			.buf = buffer.write,
-		}
+		 .addr = client->addr,
+		 .flags = 0,
+		 .len = length,
+		 .buf = buffer.write,
+		 }
 	};
 
 	retval = do_i2c_transfer(client, msg);
@@ -184,16 +182,16 @@ static void traverse_report_descriptor(unsigned int *index)
 
 	size = buf[*index] & MASK_2BIT;
 	switch (size) {
-	case 0: /* 0 bytes */
+	case 0:		/* 0 bytes */
 		*index += 1;
 		break;
-	case 1: /* 1 byte */
+	case 1:		/* 1 byte */
 		*index += 2;
 		break;
-	case 2: /* 2 bytes */
+	case 2:		/* 2 bytes */
 		*index += 3;
 		break;
-	case 3: /* 4 bytes */
+	case 3:		/* 4 bytes */
 		*index += 5;
 		break;
 	default:
@@ -370,10 +368,9 @@ static int check_report_mode(struct synaptics_rmi4_data *rmi4_data)
 
 	retval = buffer.read[3];
 	dev_dbg(rmi4_data->pdev->dev.parent,
-			"%s: Report mode = %d\n",
-			__func__, retval);
+		"%s: Report mode = %d\n", __func__, retval);
 
-exit:
+ exit:
 	mutex_unlock(&rmi4_data->rmi4_io_ctrl_mutex);
 
 	return retval;
@@ -384,7 +381,7 @@ static int hid_i2c_init(struct synaptics_rmi4_data *rmi4_data)
 	int retval;
 	struct i2c_client *i2c = to_i2c_client(rmi4_data->pdev->dev.parent);
 	const struct synaptics_dsx_board_data *bdata =
-			rmi4_data->hw_if->board_data;
+	    rmi4_data->hw_if->board_data;
 
 	mutex_lock(&rmi4_data->rmi4_io_ctrl_mutex);
 
@@ -400,14 +397,12 @@ static int hid_i2c_init(struct synaptics_rmi4_data *rmi4_data)
 	if (retval < 0)
 		goto exit;
 	retval = secure_memcpy((unsigned char *)&hid_dd,
-			sizeof(struct hid_device_descriptor),
-			buffer.read,
-			buffer.read_size,
-			sizeof(hid_dd));
+			       sizeof(struct hid_device_descriptor),
+			       buffer.read, buffer.read_size, sizeof(hid_dd));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to copy device descriptor data\n",
-				__func__);
+			"%s: Failed to copy device descriptor data\n",
+			__func__);
 		goto exit;
 	}
 
@@ -458,13 +453,13 @@ static int hid_i2c_init(struct synaptics_rmi4_data *rmi4_data)
 	if (retval < 0)
 		goto exit;
 
-exit:
+ exit:
 	mutex_unlock(&rmi4_data->rmi4_io_ctrl_mutex);
 
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to initialize HID/I2C interface\n",
-				__func__);
+			"%s: Failed to initialize HID/I2C interface\n",
+			__func__);
 		return retval;
 	}
 
@@ -474,7 +469,8 @@ exit:
 }
 
 static int synaptics_rmi4_i2c_read(struct synaptics_rmi4_data *rmi4_data,
-		unsigned short addr, unsigned char *data, unsigned short length)
+				   unsigned short addr, unsigned char *data,
+				   unsigned short length)
 {
 	int retval;
 	unsigned char retry;
@@ -483,22 +479,22 @@ static int synaptics_rmi4_i2c_read(struct synaptics_rmi4_data *rmi4_data,
 	struct i2c_client *i2c = to_i2c_client(rmi4_data->pdev->dev.parent);
 	struct i2c_msg msg[] = {
 		{
-			.addr = i2c->addr,
-			.flags = 0,
-			.len = hid_dd.output_report_max_length + 2,
-		},
+		 .addr = i2c->addr,
+		 .flags = 0,
+		 .len = hid_dd.output_report_max_length + 2,
+		 },
 		{
-			.addr = i2c->addr,
-			.flags = I2C_M_RD,
-			.len = length + 4,
-		},
+		 .addr = i2c->addr,
+		 .flags = I2C_M_RD,
+		 .len = length + 4,
+		 },
 	};
 
-recover:
+ recover:
 	mutex_lock(&rmi4_data->rmi4_io_ctrl_mutex);
 
 	check_buffer(&buffer.write, &buffer.write_size,
-			hid_dd.output_report_max_length + 2);
+		     hid_dd.output_report_max_length + 2);
 	msg[0].buf = buffer.write;
 	buffer.write[0] = hid_dd.output_register_index & MASK_8BIT;
 	buffer.write[1] = hid_dd.output_register_index >> 8;
@@ -529,12 +525,11 @@ recover:
 		report_length = (buffer.read[1] << 8) | buffer.read[0];
 		if (report_length == hid_dd.input_report_max_length) {
 			retval = secure_memcpy(&data[0], length,
-					&buffer.read[4], buffer.read_size - 4,
-					length);
+					       &buffer.read[4],
+					       buffer.read_size - 4, length);
 			if (retval < 0) {
 				dev_err(rmi4_data->pdev->dev.parent,
-						"%s: Failed to copy data\n",
-						__func__);
+					"%s: Failed to copy data\n", __func__);
 			} else {
 				retval = length;
 			}
@@ -546,11 +541,10 @@ recover:
 	} while (retry < SYN_I2C_RETRY_TIMES);
 
 	dev_err(rmi4_data->pdev->dev.parent,
-			"%s: Failed to receive read report\n",
-			__func__);
+		"%s: Failed to receive read report\n", __func__);
 	retval = -EIO;
 
-exit:
+ exit:
 	mutex_unlock(&rmi4_data->rmi4_io_ctrl_mutex);
 
 	if ((retval != length) && (recover == 1)) {
@@ -566,7 +560,8 @@ exit:
 }
 
 static int synaptics_rmi4_i2c_write(struct synaptics_rmi4_data *rmi4_data,
-		unsigned short addr, unsigned char *data, unsigned short length)
+				    unsigned short addr, unsigned char *data,
+				    unsigned short length)
 {
 	int retval;
 	unsigned char recover = 1;
@@ -574,9 +569,9 @@ static int synaptics_rmi4_i2c_write(struct synaptics_rmi4_data *rmi4_data,
 	struct i2c_client *i2c = to_i2c_client(rmi4_data->pdev->dev.parent);
 	struct i2c_msg msg[] = {
 		{
-			.addr = i2c->addr,
-			.flags = 0,
-		}
+		 .addr = i2c->addr,
+		 .flags = 0,
+		 }
 	};
 
 	if ((length + 10) < (hid_dd.output_report_max_length + 2))
@@ -584,7 +579,7 @@ static int synaptics_rmi4_i2c_write(struct synaptics_rmi4_data *rmi4_data,
 	else
 		msg_length = length + 10;
 
-recover:
+ recover:
 	mutex_lock(&rmi4_data->rmi4_io_ctrl_mutex);
 
 	check_buffer(&buffer.write, &buffer.write_size, msg_length);
@@ -601,11 +596,10 @@ recover:
 	buffer.write[8] = length & MASK_8BIT;
 	buffer.write[9] = length >> 8;
 	retval = secure_memcpy(&buffer.write[10], buffer.write_size - 10,
-			&data[0], length, length);
+			       &data[0], length, length);
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to copy data\n",
-				__func__);
+			"%s: Failed to copy data\n", __func__);
 	} else {
 		retval = do_i2c_transfer(i2c, msg);
 		if (retval == 0)
@@ -644,25 +638,23 @@ static void synaptics_rmi4_i2c_dev_release(struct device *dev)
 }
 
 static int synaptics_rmi4_i2c_probe(struct i2c_client *client,
-		const struct i2c_device_id *dev_id)
+				    const struct i2c_device_id *dev_id)
 {
 	int retval;
 
-	if (!i2c_check_functionality(client->adapter,
-			I2C_FUNC_SMBUS_BYTE_DATA)) {
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA)) {
 		dev_err(&client->dev,
-				"%s: SMBus byte data commands not supported by host\n",
-				__func__);
+			"%s: SMBus byte data commands not supported by host\n",
+			__func__);
 		return -EIO;
 	}
 
-	synaptics_dsx_i2c_device = kzalloc(
-			sizeof(struct platform_device),
-			GFP_KERNEL);
+	synaptics_dsx_i2c_device = kzalloc(sizeof(struct platform_device),
+					   GFP_KERNEL);
 	if (!synaptics_dsx_i2c_device) {
 		dev_err(&client->dev,
-				"%s: Failed to allocate memory for synaptics_dsx_i2c_device\n",
-				__func__);
+			"%s: Failed to allocate memory for synaptics_dsx_i2c_device\n",
+			__func__);
 		return -ENOMEM;
 	}
 
@@ -681,8 +673,7 @@ static int synaptics_rmi4_i2c_probe(struct i2c_client *client,
 	retval = platform_device_register(synaptics_dsx_i2c_device);
 	if (retval) {
 		dev_err(&client->dev,
-				"%s: Failed to register platform device\n",
-				__func__);
+			"%s: Failed to register platform device\n", __func__);
 		return -ENODEV;
 	}
 
@@ -706,13 +697,14 @@ static const struct i2c_device_id synaptics_rmi4_id_table[] = {
 	{I2C_DRIVER_NAME, 0},
 	{},
 };
+
 MODULE_DEVICE_TABLE(i2c, synaptics_rmi4_id_table);
 
 static struct i2c_driver synaptics_rmi4_i2c_driver = {
 	.driver = {
-		.name = I2C_DRIVER_NAME,
-		.owner = THIS_MODULE,
-	},
+		   .name = I2C_DRIVER_NAME,
+		   .owner = THIS_MODULE,
+		   },
 	.probe = synaptics_rmi4_i2c_probe,
 	.remove = synaptics_rmi4_i2c_remove,
 	.id_table = synaptics_rmi4_id_table,
@@ -722,6 +714,7 @@ int synaptics_rmi4_bus_init(void)
 {
 	return i2c_add_driver(&synaptics_rmi4_i2c_driver);
 }
+
 EXPORT_SYMBOL(synaptics_rmi4_bus_init);
 
 void synaptics_rmi4_bus_exit(void)
@@ -730,6 +723,7 @@ void synaptics_rmi4_bus_exit(void)
 
 	return;
 }
+
 EXPORT_SYMBOL(synaptics_rmi4_bus_exit);
 
 MODULE_AUTHOR("Synaptics, Inc.");

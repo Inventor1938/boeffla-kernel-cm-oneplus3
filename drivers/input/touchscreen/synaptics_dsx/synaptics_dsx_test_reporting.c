@@ -879,19 +879,19 @@ struct synaptics_rmi4_f55_handle {
 };
 
 show_prototype(num_of_mapped_tx)
-show_prototype(num_of_mapped_rx)
-show_prototype(tx_mapping)
-show_prototype(rx_mapping)
-show_prototype(report_size)
-show_prototype(status)
-store_prototype(do_preparation)
-store_prototype(force_cal)
-store_prototype(get_report)
-store_prototype(resume_touch)
-show_store_prototype(report_type)
-show_store_prototype(fifoindex)
-show_store_prototype(no_auto_cal)
-show_store_prototype(read_report)
+    show_prototype(num_of_mapped_rx)
+    show_prototype(tx_mapping)
+    show_prototype(rx_mapping)
+    show_prototype(report_size)
+    show_prototype(status)
+    store_prototype(do_preparation)
+    store_prototype(force_cal)
+    store_prototype(get_report)
+    store_prototype(resume_touch)
+    show_store_prototype(report_type)
+    show_store_prototype(fifoindex)
+    show_store_prototype(no_auto_cal)
+    show_store_prototype(read_report)
 
 static struct attribute *attrs[] = {
 	attrify(num_of_mapped_tx),
@@ -916,14 +916,15 @@ static struct attribute_group attr_group = {
 };
 
 static ssize_t test_sysfs_data_read(struct file *data_file,
-		struct kobject *kobj, struct bin_attribute *attributes,
-		char *buf, loff_t pos, size_t count);
+				    struct kobject *kobj,
+				    struct bin_attribute *attributes, char *buf,
+				    loff_t pos, size_t count);
 
 static struct bin_attribute test_report_data = {
 	.attr = {
-		.name = "report_data",
-		.mode = S_IRUGO,
-	},
+		 .name = "report_data",
+		 .mode = S_IRUGO,
+		 },
 	.size = 0,
 	.read = test_sysfs_data_read,
 };
@@ -1016,13 +1017,16 @@ static void test_set_report_size(void)
 	case F54_ADC_RANGE:
 		if (f54->query.has_signal_clarity) {
 			retval = synaptics_rmi4_reg_read(rmi4_data,
-					f54->control.reg_41->address,
-					f54->control.reg_41->data,
-					sizeof(f54->control.reg_41->data));
+							 f54->control.reg_41->
+							 address,
+							 f54->control.reg_41->
+							 data,
+							 sizeof(f54->control.
+								reg_41->data));
 			if (retval < 0) {
 				dev_dbg(rmi4_data->pdev->dev.parent,
-						"%s: Failed to read control reg_41\n",
-						__func__);
+					"%s: Failed to read control reg_41\n",
+					__func__);
 				f54->report_size = 0;
 				break;
 			}
@@ -1063,9 +1067,8 @@ static int test_set_interrupt(bool set)
 
 	if (!set) {
 		retval = synaptics_rmi4_reg_write(rmi4_data,
-				f01_ctrl_reg,
-				&zero,
-				sizeof(zero));
+						  f01_ctrl_reg,
+						  &zero, sizeof(zero));
 		if (retval < 0)
 			return retval;
 	}
@@ -1075,16 +1078,19 @@ static int test_set_interrupt(bool set)
 			f01_ctrl_reg = rmi4_data->f01_ctrl_base_addr + 1 + ii;
 			if (set) {
 				retval = synaptics_rmi4_reg_write(rmi4_data,
-						f01_ctrl_reg,
-						&zero,
-						sizeof(zero));
+								  f01_ctrl_reg,
+								  &zero,
+								  sizeof(zero));
 				if (retval < 0)
 					return retval;
 			} else {
 				retval = synaptics_rmi4_reg_write(rmi4_data,
-						f01_ctrl_reg,
-						&(intr_mask[ii]),
-						sizeof(intr_mask[ii]));
+								  f01_ctrl_reg,
+								  &(intr_mask
+								    [ii]),
+								  sizeof
+								  (intr_mask
+								   [ii]));
 				if (retval < 0)
 					return retval;
 			}
@@ -1095,9 +1101,8 @@ static int test_set_interrupt(bool set)
 
 	if (set) {
 		retval = synaptics_rmi4_reg_write(rmi4_data,
-				f01_ctrl_reg,
-				&f54->intr_mask,
-				1);
+						  f01_ctrl_reg,
+						  &f54->intr_mask, 1);
 		if (retval < 0)
 			return retval;
 	}
@@ -1115,13 +1120,12 @@ static int test_wait_for_command_completion(void)
 	timeout_count = 0;
 	do {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->command_base_addr,
-				&value,
-				sizeof(value));
+						 f54->command_base_addr,
+						 &value, sizeof(value));
 		if (retval < 0) {
 			dev_err(rmi4_data->pdev->dev.parent,
-					"%s: Failed to read command register\n",
-					__func__);
+				"%s: Failed to read command register\n",
+				__func__);
 			return retval;
 		}
 
@@ -1134,8 +1138,8 @@ static int test_wait_for_command_completion(void)
 
 	if (timeout_count == COMMAND_TIMEOUT_100MS) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Timed out waiting for command completion\n",
-				__func__);
+			"%s: Timed out waiting for command completion\n",
+			__func__);
 		return -ETIMEDOUT;
 	}
 
@@ -1148,13 +1152,11 @@ static int test_do_command(unsigned char command)
 	struct synaptics_rmi4_data *rmi4_data = f54->rmi4_data;
 
 	retval = synaptics_rmi4_reg_write(rmi4_data,
-			f54->command_base_addr,
-			&command,
-			sizeof(command));
+					  f54->command_base_addr,
+					  &command, sizeof(command));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to write command\n",
-				__func__);
+			"%s: Failed to write command\n", __func__);
 		return retval;
 	}
 
@@ -1174,26 +1176,22 @@ static int test_do_preparation(void)
 	struct synaptics_rmi4_data *rmi4_data = f54->rmi4_data;
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			rmi4_data->f01_ctrl_base_addr,
-			&device_ctrl,
-			sizeof(device_ctrl));
+					 rmi4_data->f01_ctrl_base_addr,
+					 &device_ctrl, sizeof(device_ctrl));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to set no sleep\n",
-				__func__);
+			"%s: Failed to set no sleep\n", __func__);
 		return retval;
 	}
 
 	device_ctrl |= NO_SLEEP_ON;
 
 	retval = synaptics_rmi4_reg_write(rmi4_data,
-			rmi4_data->f01_ctrl_base_addr,
-			&device_ctrl,
-			sizeof(device_ctrl));
+					  rmi4_data->f01_ctrl_base_addr,
+					  &device_ctrl, sizeof(device_ctrl));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to set no sleep\n",
-				__func__);
+			"%s: Failed to set no sleep\n", __func__);
 		return retval;
 	}
 
@@ -1207,26 +1205,32 @@ static int test_do_preparation(void)
 		break;
 	case F54_AMP_FULL_RAW_CAP:
 		if ((f54->query.has_query13 == 1) &&
-				(f54->query_13.has_ctrl86 == 1)) {
+		    (f54->query_13.has_ctrl86 == 1)) {
 			retval = synaptics_rmi4_reg_read(rmi4_data,
-					f54->control.reg_86->address,
-					f54->control.reg_86->data,
-					sizeof(f54->control.reg_86->data));
+							 f54->control.reg_86->
+							 address,
+							 f54->control.reg_86->
+							 data,
+							 sizeof(f54->control.
+								reg_86->data));
 			if (retval < 0) {
 				dev_err(rmi4_data->pdev->dev.parent,
-						"%s: Failed to set sense display ratio\n",
-						__func__);\
+					"%s: Failed to set sense display ratio\n",
+					__func__);
 				return retval;
 			}
 			f54->control.reg_86->dynamic_sense_display_ratio = 1;
 			retval = synaptics_rmi4_reg_write(rmi4_data,
-					f54->control.reg_86->address,
-					f54->control.reg_86->data,
-					sizeof(f54->control.reg_86->data));
+							  f54->control.reg_86->
+							  address,
+							  f54->control.reg_86->
+							  data,
+							  sizeof(f54->control.
+								 reg_86->data));
 			if (retval < 0) {
 				dev_err(rmi4_data->pdev->dev.parent,
-						"%s: Failed to set sense display ratio\n",
-						__func__);
+					"%s: Failed to set sense display ratio\n",
+					__func__);
 				return retval;
 			}
 		}
@@ -1241,23 +1245,25 @@ static int test_do_preparation(void)
 			disable_cbc(reg_57);
 
 		if ((f54->query.has_query15) &&
-				(f54->query_15.has_query25) &&
-				(f54->query_25.has_query27) &&
-				(f54->query_27.has_query29) &&
-				(f54->query_29.has_query30) &&
-				(f54->query_30.has_query32) &&
-				(f54->query_32.has_query33) &&
-				(f54->query_33.has_query36) &&
-				(f54->query_36.has_query38) &&
-				(f54->query_38.has_ctrl149)) {
+		    (f54->query_15.has_query25) &&
+		    (f54->query_25.has_query27) &&
+		    (f54->query_27.has_query29) &&
+		    (f54->query_29.has_query30) &&
+		    (f54->query_30.has_query32) &&
+		    (f54->query_32.has_query33) &&
+		    (f54->query_33.has_query36) &&
+		    (f54->query_36.has_query38) &&
+		    (f54->query_38.has_ctrl149)) {
 			retval = synaptics_rmi4_reg_write(rmi4_data,
-					f54->control.reg_149->address,
-					&zero,
-					sizeof(f54->control.reg_149->data));
+							  f54->control.reg_149->
+							  address, &zero,
+							  sizeof(f54->control.
+								 reg_149->
+								 data));
 			if (retval < 0) {
 				dev_err(rmi4_data->pdev->dev.parent,
-						"%s: Failed to disable global CBC\n",
-						__func__);
+					"%s: Failed to disable global CBC\n",
+					__func__);
 				return retval;
 			}
 		}
@@ -1265,13 +1271,14 @@ static int test_do_preparation(void)
 		if (f54->query.has_signal_clarity) {
 			value = 1;
 			retval = synaptics_rmi4_reg_write(rmi4_data,
-					f54->control.reg_41->address,
-					&value,
-					sizeof(f54->control.reg_41->data));
+							  f54->control.reg_41->
+							  address, &value,
+							  sizeof(f54->control.
+								 reg_41->data));
 			if (retval < 0) {
 				dev_err(rmi4_data->pdev->dev.parent,
-						"%s: Failed to disable signal clarity\n",
-						__func__);
+					"%s: Failed to disable signal clarity\n",
+					__func__);
 				return retval;
 			}
 		}
@@ -1279,16 +1286,14 @@ static int test_do_preparation(void)
 		retval = test_do_command(COMMAND_FORCE_UPDATE);
 		if (retval < 0) {
 			dev_err(rmi4_data->pdev->dev.parent,
-					"%s: Failed to do force update\n",
-					__func__);
+				"%s: Failed to do force update\n", __func__);
 			return retval;
 		}
 
 		retval = test_do_command(COMMAND_FORCE_CAL);
 		if (retval < 0) {
 			dev_err(rmi4_data->pdev->dev.parent,
-					"%s: Failed to do force cal\n",
-					__func__);
+				"%s: Failed to do force cal\n", __func__);
 			return retval;
 		}
 	}
@@ -1307,20 +1312,17 @@ static int test_check_for_idle_status(void)
 		break;
 	case STATUS_BUSY:
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Status busy\n",
-				__func__);
+			"%s: Status busy\n", __func__);
 		retval = -EINVAL;
 		break;
 	case STATUS_ERROR:
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Status error\n",
-				__func__);
+			"%s: Status error\n", __func__);
 		retval = -EINVAL;
 		break;
 	default:
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Invalid status (%d)\n",
-				__func__, f54->status);
+			"%s: Invalid status (%d)\n", __func__, f54->status);
 		retval = -EINVAL;
 	}
 
@@ -1337,27 +1339,26 @@ static void test_timeout_work(struct work_struct *work)
 
 	if (f54->status == STATUS_BUSY) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->command_base_addr,
-				&command,
-				sizeof(command));
+						 f54->command_base_addr,
+						 &command, sizeof(command));
 		if (retval < 0) {
 			dev_err(rmi4_data->pdev->dev.parent,
-					"%s: Failed to read command register\n",
-					__func__);
+				"%s: Failed to read command register\n",
+				__func__);
 		} else if (command & COMMAND_GET_REPORT) {
 			dev_err(rmi4_data->pdev->dev.parent,
-					"%s: Report type not supported by FW\n",
-					__func__);
+				"%s: Report type not supported by FW\n",
+				__func__);
 		} else {
 			queue_work(f54->test_report_workqueue,
-					&f54->test_report_work);
+				   &f54->test_report_work);
 			goto exit;
 		}
 		f54->status = STATUS_ERROR;
 		f54->report_size = 0;
 	}
 
-exit:
+ exit:
 	mutex_unlock(&f54->status_mutex);
 
 	return;
@@ -1371,19 +1372,22 @@ static enum hrtimer_restart test_get_report_timeout(struct hrtimer *timer)
 }
 
 static ssize_t test_sysfs_num_of_mapped_tx_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+						struct device_attribute *attr,
+						char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%u\n", f54->tx_assigned);
 }
 
 static ssize_t test_sysfs_num_of_mapped_rx_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+						struct device_attribute *attr,
+						char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%u\n", f54->rx_assigned);
 }
 
 static ssize_t test_sysfs_tx_mapping_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+					  struct device_attribute *attr,
+					  char *buf)
 {
 	int cnt;
 	int count = 0;
@@ -1411,7 +1415,8 @@ static ssize_t test_sysfs_tx_mapping_show(struct device *dev,
 }
 
 static ssize_t test_sysfs_rx_mapping_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+					  struct device_attribute *attr,
+					  char *buf)
 {
 	int cnt;
 	int count = 0;
@@ -1439,13 +1444,14 @@ static ssize_t test_sysfs_rx_mapping_show(struct device *dev,
 }
 
 static ssize_t test_sysfs_report_size_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+					   struct device_attribute *attr,
+					   char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%u\n", f54->report_size);
 }
 
 static ssize_t test_sysfs_status_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+				      struct device_attribute *attr, char *buf)
 {
 	int retval;
 
@@ -1459,7 +1465,8 @@ static ssize_t test_sysfs_status_show(struct device *dev,
 }
 
 static ssize_t test_sysfs_do_preparation_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+					       struct device_attribute *attr,
+					       const char *buf, size_t count)
 {
 	int retval;
 	unsigned long setting;
@@ -1481,21 +1488,21 @@ static ssize_t test_sysfs_do_preparation_store(struct device *dev,
 	retval = test_do_preparation();
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to do preparation\n",
-				__func__);
+			"%s: Failed to do preparation\n", __func__);
 		goto exit;
 	}
 
 	retval = count;
 
-exit:
+ exit:
 	mutex_unlock(&f54->status_mutex);
 
 	return retval;
 }
 
 static ssize_t test_sysfs_force_cal_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+					  struct device_attribute *attr,
+					  const char *buf, size_t count)
 {
 	int retval;
 	unsigned long setting;
@@ -1517,21 +1524,21 @@ static ssize_t test_sysfs_force_cal_store(struct device *dev,
 	retval = test_do_command(COMMAND_FORCE_CAL);
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to do force cal\n",
-				__func__);
+			"%s: Failed to do force cal\n", __func__);
 		goto exit;
 	}
 
 	retval = count;
 
-exit:
+ exit:
 	mutex_unlock(&f54->status_mutex);
 
 	return retval;
 }
 
 static ssize_t test_sysfs_get_report_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+					   struct device_attribute *attr,
+					   const char *buf, size_t count)
 {
 	int retval;
 	unsigned char command;
@@ -1553,8 +1560,7 @@ static ssize_t test_sysfs_get_report_store(struct device *dev,
 
 	if (!test_report_type_valid(f54->report_type)) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Invalid report type\n",
-				__func__);
+			"%s: Invalid report type\n", __func__);
 		retval = -EINVAL;
 		goto exit;
 	}
@@ -1564,13 +1570,11 @@ static ssize_t test_sysfs_get_report_store(struct device *dev,
 	command = (unsigned char)COMMAND_GET_REPORT;
 
 	retval = synaptics_rmi4_reg_write(rmi4_data,
-			f54->command_base_addr,
-			&command,
-			sizeof(command));
+					  f54->command_base_addr,
+					  &command, sizeof(command));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to write get report command\n",
-				__func__);
+			"%s: Failed to write get report command\n", __func__);
 		goto exit;
 	}
 
@@ -1579,19 +1583,19 @@ static ssize_t test_sysfs_get_report_store(struct device *dev,
 	f54->data_pos = 0;
 
 	hrtimer_start(&f54->watchdog,
-			ktime_set(GET_REPORT_TIMEOUT_S, 0),
-			HRTIMER_MODE_REL);
+		      ktime_set(GET_REPORT_TIMEOUT_S, 0), HRTIMER_MODE_REL);
 
 	retval = count;
 
-exit:
+ exit:
 	mutex_unlock(&f54->status_mutex);
 
 	return retval;
 }
 
 static ssize_t test_sysfs_resume_touch_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+					     struct device_attribute *attr,
+					     const char *buf, size_t count)
 {
 	int retval;
 	unsigned char device_ctrl;
@@ -1613,13 +1617,13 @@ static ssize_t test_sysfs_resume_touch_store(struct device *dev,
 	case F54_ABS_RAW_CAP:
 	case F54_ABS_DELTA_CAP:
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				rmi4_data->f01_ctrl_base_addr,
-				&device_ctrl,
-				sizeof(device_ctrl));
+						 rmi4_data->f01_ctrl_base_addr,
+						 &device_ctrl,
+						 sizeof(device_ctrl));
 		if (retval < 0) {
 			dev_err(rmi4_data->pdev->dev.parent,
-					"%s: Failed to restore no sleep setting\n",
-					__func__);
+				"%s: Failed to restore no sleep setting\n",
+				__func__);
 			return retval;
 		}
 
@@ -1627,13 +1631,13 @@ static ssize_t test_sysfs_resume_touch_store(struct device *dev,
 		device_ctrl |= rmi4_data->no_sleep_setting;
 
 		retval = synaptics_rmi4_reg_write(rmi4_data,
-				rmi4_data->f01_ctrl_base_addr,
-				&device_ctrl,
-				sizeof(device_ctrl));
+						  rmi4_data->f01_ctrl_base_addr,
+						  &device_ctrl,
+						  sizeof(device_ctrl));
 		if (retval < 0) {
 			dev_err(rmi4_data->pdev->dev.parent,
-					"%s: Failed to restore no sleep setting\n",
-					__func__);
+				"%s: Failed to restore no sleep setting\n",
+				__func__);
 			return retval;
 		}
 
@@ -1647,13 +1651,15 @@ static ssize_t test_sysfs_resume_touch_store(struct device *dev,
 }
 
 static ssize_t test_sysfs_report_type_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+					   struct device_attribute *attr,
+					   char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%u\n", f54->report_type);
 }
 
 static ssize_t test_sysfs_report_type_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+					    struct device_attribute *attr,
+					    const char *buf, size_t count)
 {
 	int retval;
 	unsigned char data;
@@ -1672,8 +1678,7 @@ static ssize_t test_sysfs_report_type_store(struct device *dev,
 
 	if (!test_report_type_valid((enum f54_report_types)setting)) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Report type not supported by driver\n",
-				__func__);
+			"%s: Report type not supported by driver\n", __func__);
 		retval = -EINVAL;
 		goto exit;
 	}
@@ -1681,39 +1686,37 @@ static ssize_t test_sysfs_report_type_store(struct device *dev,
 	f54->report_type = (enum f54_report_types)setting;
 	data = (unsigned char)setting;
 	retval = synaptics_rmi4_reg_write(rmi4_data,
-			f54->data_base_addr,
-			&data,
-			sizeof(data));
+					  f54->data_base_addr,
+					  &data, sizeof(data));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to write report type\n",
-				__func__);
+			"%s: Failed to write report type\n", __func__);
 		goto exit;
 	}
 
 	retval = count;
 
-exit:
+ exit:
 	mutex_unlock(&f54->status_mutex);
 
 	return retval;
 }
 
 static ssize_t test_sysfs_fifoindex_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+					 struct device_attribute *attr,
+					 char *buf)
 {
 	int retval;
 	unsigned char data[2];
 	struct synaptics_rmi4_data *rmi4_data = f54->rmi4_data;
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			f54->data_base_addr + REPORT_INDEX_OFFSET,
-			data,
-			sizeof(data));
+					 f54->data_base_addr +
+					 REPORT_INDEX_OFFSET, data,
+					 sizeof(data));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to read report index\n",
-				__func__);
+			"%s: Failed to read report index\n", __func__);
 		return retval;
 	}
 
@@ -1723,7 +1726,8 @@ static ssize_t test_sysfs_fifoindex_show(struct device *dev,
 }
 
 static ssize_t test_sysfs_fifoindex_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+					  struct device_attribute *attr,
+					  const char *buf, size_t count)
 {
 	int retval;
 	unsigned char data[2];
@@ -1739,13 +1743,12 @@ static ssize_t test_sysfs_fifoindex_store(struct device *dev,
 	hstoba(data, (unsigned short)setting);
 
 	retval = synaptics_rmi4_reg_write(rmi4_data,
-			f54->data_base_addr + REPORT_INDEX_OFFSET,
-			data,
-			sizeof(data));
+					  f54->data_base_addr +
+					  REPORT_INDEX_OFFSET, data,
+					  sizeof(data));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to write report index\n",
-				__func__);
+			"%s: Failed to write report index\n", __func__);
 		return retval;
 	}
 
@@ -1753,13 +1756,15 @@ static ssize_t test_sysfs_fifoindex_store(struct device *dev,
 }
 
 static ssize_t test_sysfs_no_auto_cal_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+					   struct device_attribute *attr,
+					   char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%u\n", f54->no_auto_cal);
 }
 
 static ssize_t test_sysfs_no_auto_cal_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+					    struct device_attribute *attr,
+					    const char *buf, size_t count)
 {
 	int retval;
 	unsigned char data;
@@ -1774,13 +1779,11 @@ static ssize_t test_sysfs_no_auto_cal_store(struct device *dev,
 		return -EINVAL;
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			f54->control_base_addr,
-			&data,
-			sizeof(data));
+					 f54->control_base_addr,
+					 &data, sizeof(data));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to read no auto cal setting\n",
-				__func__);
+			"%s: Failed to read no auto cal setting\n", __func__);
 		return retval;
 	}
 
@@ -1790,13 +1793,11 @@ static ssize_t test_sysfs_no_auto_cal_store(struct device *dev,
 		data &= ~CONTROL_NO_AUTO_CAL;
 
 	retval = synaptics_rmi4_reg_write(rmi4_data,
-			f54->control_base_addr,
-			&data,
-			sizeof(data));
+					  f54->control_base_addr,
+					  &data, sizeof(data));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to write no auto cal setting\n",
-				__func__);
+			"%s: Failed to write no auto cal setting\n", __func__);
 		return retval;
 	}
 
@@ -1806,7 +1807,8 @@ static ssize_t test_sysfs_no_auto_cal_store(struct device *dev,
 }
 
 static ssize_t test_sysfs_read_report_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+					   struct device_attribute *attr,
+					   char *buf)
 {
 	unsigned int ii;
 	unsigned int jj;
@@ -1824,7 +1826,7 @@ static ssize_t test_sysfs_read_report_show(struct device *dev,
 		report_data_8 = (char *)f54->report_data;
 		for (ii = 0; ii < f54->report_size; ii++) {
 			cnt = snprintf(buf, PAGE_SIZE - count, "%03d: %d\n",
-					ii, *report_data_8);
+				       ii, *report_data_8);
 			report_data_8++;
 			buf += cnt;
 			count += cnt;
@@ -1839,20 +1841,20 @@ static ssize_t test_sysfs_read_report_show(struct device *dev,
 	case F54_AMP_FULL_RAW_CAP:
 		report_data_16 = (short *)f54->report_data;
 		cnt = snprintf(buf, PAGE_SIZE - count, "tx = %d\nrx = %d\n",
-				tx_num, rx_num);
+			       tx_num, rx_num);
 		buf += cnt;
 		count += cnt;
 
 		for (ii = 0; ii < tx_num; ii++) {
 			for (jj = 0; jj < (rx_num - 1); jj++) {
 				cnt = snprintf(buf, PAGE_SIZE - count, "%-4d ",
-						*report_data_16);
+					       *report_data_16);
 				report_data_16++;
 				buf += cnt;
 				count += cnt;
 			}
 			cnt = snprintf(buf, PAGE_SIZE - count, "%-4d\n",
-					*report_data_16);
+				       *report_data_16);
 			report_data_16++;
 			buf += cnt;
 			count += cnt;
@@ -1863,7 +1865,7 @@ static ssize_t test_sysfs_read_report_show(struct device *dev,
 		report_data_16 = (short *)f54->report_data;
 		for (ii = 0; ii < f54->report_size; ii += 2) {
 			cnt = snprintf(buf, PAGE_SIZE - count, "%03d: %d\n",
-					ii / 2, *report_data_16);
+				       ii / 2, *report_data_16);
 			report_data_16++;
 			buf += cnt;
 			count += cnt;
@@ -1888,7 +1890,7 @@ static ssize_t test_sysfs_read_report_show(struct device *dev,
 		count += cnt;
 		for (ii = 0; ii < rx_num; ii++) {
 			cnt = snprintf(buf, PAGE_SIZE - count, "  %5u",
-					*report_data_u32);
+				       *report_data_u32);
 			report_data_u32++;
 			buf += cnt;
 			count += cnt;
@@ -1914,7 +1916,7 @@ static ssize_t test_sysfs_read_report_show(struct device *dev,
 		count += cnt;
 		for (ii = 0; ii < tx_num; ii++) {
 			cnt = snprintf(buf, PAGE_SIZE - count, "  %5u",
-					*report_data_u32);
+				       *report_data_u32);
 			report_data_u32++;
 			buf += cnt;
 			count += cnt;
@@ -1942,7 +1944,7 @@ static ssize_t test_sysfs_read_report_show(struct device *dev,
 		count += cnt;
 		for (ii = 0; ii < rx_num; ii++) {
 			cnt = snprintf(buf, PAGE_SIZE - count, "  %5d",
-					*report_data_32);
+				       *report_data_32);
 			report_data_32++;
 			buf += cnt;
 			count += cnt;
@@ -1968,7 +1970,7 @@ static ssize_t test_sysfs_read_report_show(struct device *dev,
 		count += cnt;
 		for (ii = 0; ii < tx_num; ii++) {
 			cnt = snprintf(buf, PAGE_SIZE - count, "  %5d",
-					*report_data_32);
+				       *report_data_32);
 			report_data_32++;
 			buf += cnt;
 			count += cnt;
@@ -1980,7 +1982,7 @@ static ssize_t test_sysfs_read_report_show(struct device *dev,
 	default:
 		for (ii = 0; ii < f54->report_size; ii++) {
 			cnt = snprintf(buf, PAGE_SIZE - count, "%03d: 0x%02x\n",
-					ii, f54->report_data[ii]);
+				       ii, f54->report_data[ii]);
 			buf += cnt;
 			count += cnt;
 		}
@@ -1993,12 +1995,13 @@ static ssize_t test_sysfs_read_report_show(struct device *dev,
 }
 
 static ssize_t test_sysfs_read_report_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+					    struct device_attribute *attr,
+					    const char *buf, size_t count)
 {
 	int retval;
 	unsigned char timeout = GET_REPORT_TIMEOUT_S * 10;
 	unsigned char timeout_count;
-	const char cmd[] = {'1', 0};
+	const char cmd[] = { '1', 0 };
 	struct synaptics_rmi4_data *rmi4_data = f54->rmi4_data;
 
 	retval = test_sysfs_report_type_store(dev, attr, buf, count);
@@ -2023,8 +2026,7 @@ static ssize_t test_sysfs_read_report_store(struct device *dev,
 
 	if ((f54->status != STATUS_IDLE) || (f54->report_size == 0)) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to read report\n",
-				__func__);
+			"%s: Failed to read report\n", __func__);
 		retval = -EINVAL;
 		goto exit;
 	}
@@ -2035,15 +2037,16 @@ static ssize_t test_sysfs_read_report_store(struct device *dev,
 
 	return count;
 
-exit:
+ exit:
 	rmi4_data->reset_device(rmi4_data, false);
 
 	return retval;
 }
 
 static ssize_t test_sysfs_data_read(struct file *data_file,
-		struct kobject *kobj, struct bin_attribute *attributes,
-		char *buf, loff_t pos, size_t count)
+				    struct kobject *kobj,
+				    struct bin_attribute *attributes, char *buf,
+				    loff_t pos, size_t count)
 {
 	int retval;
 	unsigned int read_size;
@@ -2057,8 +2060,8 @@ static ssize_t test_sysfs_data_read(struct file *data_file,
 
 	if (!f54->report_data) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Report type %d data not available\n",
-				__func__, f54->report_type);
+			"%s: Report type %d data not available\n",
+			__func__, f54->report_type);
 		retval = -EINVAL;
 		goto exit;
 	}
@@ -2069,17 +2072,17 @@ static ssize_t test_sysfs_data_read(struct file *data_file,
 		read_size = min(count, f54->report_size);
 
 	retval = secure_memcpy(buf, count, f54->report_data + f54->data_pos,
-			f54->data_buffer_size - f54->data_pos, read_size);
+			       f54->data_buffer_size - f54->data_pos,
+			       read_size);
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to copy report data\n",
-				__func__);
+			"%s: Failed to copy report data\n", __func__);
 		goto exit;
 	}
 	f54->data_pos += read_size;
 	retval = read_size;
 
-exit:
+ exit:
 	mutex_unlock(&f54->status_mutex);
 
 	return retval;
@@ -2107,8 +2110,7 @@ static void test_report_work(struct work_struct *work)
 	test_set_report_size();
 	if (f54->report_size == 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Report data size = 0\n",
-				__func__);
+			"%s: Report data size = 0\n", __func__);
 		retval = STATUS_ERROR;
 		goto exit;
 	}
@@ -2119,8 +2121,8 @@ static void test_report_work(struct work_struct *work)
 		f54->report_data = kzalloc(f54->report_size, GFP_KERNEL);
 		if (!f54->report_data) {
 			dev_err(rmi4_data->pdev->dev.parent,
-					"%s: Failed to alloc mem for data buffer\n",
-					__func__);
+				"%s: Failed to alloc mem for data buffer\n",
+				__func__);
 			f54->data_buffer_size = 0;
 			retval = STATUS_ERROR;
 			goto exit;
@@ -2132,32 +2134,30 @@ static void test_report_work(struct work_struct *work)
 	report_index[1] = 0;
 
 	retval = synaptics_rmi4_reg_write(rmi4_data,
-			f54->data_base_addr + REPORT_INDEX_OFFSET,
-			report_index,
-			sizeof(report_index));
+					  f54->data_base_addr +
+					  REPORT_INDEX_OFFSET, report_index,
+					  sizeof(report_index));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to write report data index\n",
-				__func__);
+			"%s: Failed to write report data index\n", __func__);
 		retval = STATUS_ERROR;
 		goto exit;
 	}
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			f54->data_base_addr + REPORT_DATA_OFFSET,
-			f54->report_data,
-			f54->report_size);
+					 f54->data_base_addr +
+					 REPORT_DATA_OFFSET, f54->report_data,
+					 f54->report_size);
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to read report data\n",
-				__func__);
+			"%s: Failed to read report data\n", __func__);
 		retval = STATUS_ERROR;
 		goto exit;
 	}
 
 	retval = STATUS_IDLE;
 
-exit:
+ exit:
 	mutex_unlock(&f54->status_mutex);
 
 	if (retval == STATUS_ERROR)
@@ -2183,40 +2183,38 @@ static int test_set_sysfs(void)
 	struct synaptics_rmi4_data *rmi4_data = f54->rmi4_data;
 
 	f54->sysfs_dir = kobject_create_and_add(SYSFS_FOLDER_NAME,
-			&rmi4_data->input_dev->dev.kobj);
+						&rmi4_data->input_dev->dev.
+						kobj);
 	if (!f54->sysfs_dir) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to create sysfs directory\n",
-				__func__);
+			"%s: Failed to create sysfs directory\n", __func__);
 		goto exit_directory;
 	}
 
 	retval = sysfs_create_bin_file(f54->sysfs_dir, &test_report_data);
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to create sysfs bin file\n",
-				__func__);
+			"%s: Failed to create sysfs bin file\n", __func__);
 		goto exit_bin_file;
 	}
 
 	retval = sysfs_create_group(f54->sysfs_dir, &attr_group);
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to create sysfs attributes\n",
-				__func__);
+			"%s: Failed to create sysfs attributes\n", __func__);
 		goto exit_attributes;
 	}
 
 	return 0;
 
-exit_attributes:
+ exit_attributes:
 	sysfs_remove_group(f54->sysfs_dir, &attr_group);
 	sysfs_remove_bin_file(f54->sysfs_dir, &test_report_data);
 
-exit_bin_file:
+ exit_bin_file:
 	kobject_put(f54->sysfs_dir);
 
-exit_directory:
+ exit_directory:
 	return -ENODEV;
 }
 
@@ -2250,7 +2248,7 @@ static int test_set_controls(void)
 
 	/* control 1 */
 	if ((f54->query.touch_controller_family == 0) ||
-			(f54->query.touch_controller_family == 1))
+	    (f54->query.touch_controller_family == 1))
 		reg_addr += CONTROL_1_SIZE;
 
 	/* control 2 */
@@ -2262,13 +2260,12 @@ static int test_set_controls(void)
 
 	/* controls 4 5 6 */
 	if ((f54->query.touch_controller_family == 0) ||
-			(f54->query.touch_controller_family == 1))
+	    (f54->query.touch_controller_family == 1))
 		reg_addr += CONTROL_4_6_SIZE;
 
 	/* control 7 */
 	if (f54->query.touch_controller_family == 1) {
-		control->reg_7 = kzalloc(sizeof(*(control->reg_7)),
-				GFP_KERNEL);
+		control->reg_7 = kzalloc(sizeof(*(control->reg_7)), GFP_KERNEL);
 		if (!control->reg_7)
 			goto exit_no_mem;
 		control->reg_7->address = reg_addr;
@@ -2277,7 +2274,7 @@ static int test_set_controls(void)
 
 	/* controls 8 9 */
 	if ((f54->query.touch_controller_family == 0) ||
-			(f54->query.touch_controller_family == 1))
+	    (f54->query.touch_controller_family == 1))
 		reg_addr += CONTROL_8_9_SIZE;
 
 	/* control 10 */
@@ -2343,10 +2340,10 @@ static int test_set_controls(void)
 
 	/* control 36 */
 	if ((f54->query.curve_compensation_mode == 1) ||
-			(f54->query.curve_compensation_mode == 2)) {
+	    (f54->query.curve_compensation_mode == 2)) {
 		if (f54->query.curve_compensation_mode == 1) {
 			length = max(f54->query.num_of_rx_electrodes,
-					f54->query.num_of_tx_electrodes);
+				     f54->query.num_of_tx_electrodes);
 		} else if (f54->query.curve_compensation_mode == 2) {
 			length = f54->query.num_of_rx_electrodes;
 		}
@@ -2367,7 +2364,7 @@ static int test_set_controls(void)
 	/* control 41 */
 	if (f54->query.has_signal_clarity == 1) {
 		control->reg_41 = kzalloc(sizeof(*(control->reg_41)),
-				GFP_KERNEL);
+					  GFP_KERNEL);
 		if (!control->reg_41)
 			goto exit_no_mem;
 		control->reg_41->address = reg_addr;
@@ -2389,7 +2386,7 @@ static int test_set_controls(void)
 	/* control 57 */
 	if (f54->query.has_0d_acquisition_control == 1) {
 		control->reg_57 = kzalloc(sizeof(*(control->reg_57)),
-				GFP_KERNEL);
+					  GFP_KERNEL);
 		if (!control->reg_57)
 			goto exit_no_mem;
 		control->reg_57->address = reg_addr;
@@ -2406,30 +2403,28 @@ static int test_set_controls(void)
 
 	/* controls 60 61 62 */
 	if ((f54->query.has_h_blank == 1) ||
-			(f54->query.has_v_blank == 1) ||
-			(f54->query.has_long_h_blank == 1))
+	    (f54->query.has_v_blank == 1) || (f54->query.has_long_h_blank == 1))
 		reg_addr += CONTROL_60_62_SIZE;
 
 	/* control 63 */
 	if ((f54->query.has_h_blank == 1) ||
-			(f54->query.has_v_blank == 1) ||
-			(f54->query.has_long_h_blank == 1) ||
-			(f54->query.has_slew_metric == 1) ||
-			(f54->query.has_slew_option == 1) ||
-			(f54->query.has_noise_mitigation2 == 1))
+	    (f54->query.has_v_blank == 1) ||
+	    (f54->query.has_long_h_blank == 1) ||
+	    (f54->query.has_slew_metric == 1) ||
+	    (f54->query.has_slew_option == 1) ||
+	    (f54->query.has_noise_mitigation2 == 1))
 		reg_addr += CONTROL_63_SIZE;
 
 	/* controls 64 65 66 67 */
 	if (f54->query.has_h_blank == 1)
 		reg_addr += CONTROL_64_67_SIZE * 7;
 	else if ((f54->query.has_v_blank == 1) ||
-			(f54->query.has_long_h_blank == 1))
+		 (f54->query.has_long_h_blank == 1))
 		reg_addr += CONTROL_64_67_SIZE;
 
 	/* controls 68 69 70 71 72 73 */
 	if ((f54->query.has_h_blank == 1) ||
-			(f54->query.has_v_blank == 1) ||
-			(f54->query.has_long_h_blank == 1))
+	    (f54->query.has_v_blank == 1) || (f54->query.has_long_h_blank == 1))
 		reg_addr += CONTROL_68_73_SIZE;
 
 	/* control 74 */
@@ -2459,7 +2454,7 @@ static int test_set_controls(void)
 	/* control 86 */
 	if ((f54->query.has_query13 == 1) && (f54->query_13.has_ctrl86 == 1)) {
 		control->reg_86 = kzalloc(sizeof(*(control->reg_86)),
-				GFP_KERNEL);
+					  GFP_KERNEL);
 		if (!control->reg_86)
 			goto exit_no_mem;
 		control->reg_86->address = reg_addr;
@@ -2473,7 +2468,7 @@ static int test_set_controls(void)
 	/* control 88 */
 	if (f54->query.has_ctrl88 == 1) {
 		control->reg_88 = kzalloc(sizeof(*(control->reg_88)),
-				GFP_KERNEL);
+					  GFP_KERNEL);
 		if (!control->reg_88)
 			goto exit_no_mem;
 		control->reg_88->address = reg_addr;
@@ -2482,9 +2477,9 @@ static int test_set_controls(void)
 
 	/* control 89 */
 	if ((f54->query.has_query13 == 1) &&
-			(f54->query_13.has_cidim == 1 ||
-			f54->query_13.has_noise_mitigation_enhancement ||
-			f54->query_13.has_rail_im))
+	    (f54->query_13.has_cidim == 1 ||
+	     f54->query_13.has_noise_mitigation_enhancement ||
+	     f54->query_13.has_rail_im))
 		reg_addr += CONTROL_89_SIZE;
 
 	/* control 90 */
@@ -2493,50 +2488,42 @@ static int test_set_controls(void)
 
 	/* control 91 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query21) &&
-			(f54->query_21.has_ctrl91))
+	    (f54->query_15.has_query21) && (f54->query_21.has_ctrl91))
 		reg_addr += CONTROL_91_SIZE;
 
 	/* control 92 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query16) &&
-			(f54->query_16.has_ctrl92))
+	    (f54->query_15.has_query16) && (f54->query_16.has_ctrl92))
 		reg_addr += CONTROL_92_SIZE;
 
 	/* control 93 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query16) &&
-			(f54->query_16.has_ctrl93))
+	    (f54->query_15.has_query16) && (f54->query_16.has_ctrl93))
 		reg_addr += CONTROL_93_SIZE;
 
 	/* control 94 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query16) &&
-			(f54->query_16.has_ctrl94_query18))
+	    (f54->query_15.has_query16) && (f54->query_16.has_ctrl94_query18))
 		reg_addr += CONTROL_94_SIZE;
 
 	/* control 95 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query16) &&
-			(f54->query_16.has_ctrl95_query19))
+	    (f54->query_15.has_query16) && (f54->query_16.has_ctrl95_query19))
 		reg_addr += CONTROL_95_SIZE;
 
 	/* control 96 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query21) &&
-			(f54->query_21.has_ctrl96))
+	    (f54->query_15.has_query21) && (f54->query_21.has_ctrl96))
 		reg_addr += CONTROL_96_SIZE;
 
 	/* control 97 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query21) &&
-			(f54->query_21.has_ctrl97))
+	    (f54->query_15.has_query21) && (f54->query_21.has_ctrl97))
 		reg_addr += CONTROL_97_SIZE;
 
 	/* control 98 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query21) &&
-			(f54->query_21.has_ctrl98))
+	    (f54->query_15.has_query21) && (f54->query_21.has_ctrl98))
 		reg_addr += CONTROL_98_SIZE;
 
 	/* control 99 */
@@ -2545,73 +2532,61 @@ static int test_set_controls(void)
 
 	/* control 100 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query16) &&
-			(f54->query_16.has_ctrl100))
+	    (f54->query_15.has_query16) && (f54->query_16.has_ctrl100))
 		reg_addr += CONTROL_100_SIZE;
 
 	/* control 101 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query22) &&
-			(f54->query_22.has_ctrl101))
+	    (f54->query_15.has_query22) && (f54->query_22.has_ctrl101))
 		reg_addr += CONTROL_101_SIZE;
-
 
 	/* control 102 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query22) &&
-			(f54->query_22.has_query23) &&
-			(f54->query_23.has_ctrl102))
+	    (f54->query_15.has_query22) &&
+	    (f54->query_22.has_query23) && (f54->query_23.has_ctrl102))
 		reg_addr += CONTROL_102_SIZE;
 
 	/* control 103 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query22) &&
-			(f54->query_22.has_ctrl103_query26))
+	    (f54->query_15.has_query22) && (f54->query_22.has_ctrl103_query26))
 		reg_addr += CONTROL_103_SIZE;
 
 	/* control 104 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query22) &&
-			(f54->query_22.has_ctrl104))
+	    (f54->query_15.has_query22) && (f54->query_22.has_ctrl104))
 		reg_addr += CONTROL_104_SIZE;
 
 	/* control 105 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query22) &&
-			(f54->query_22.has_ctrl105))
+	    (f54->query_15.has_query22) && (f54->query_22.has_ctrl105))
 		reg_addr += CONTROL_105_SIZE;
 
 	/* control 106 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_ctrl106))
+	    (f54->query_15.has_query25) && (f54->query_25.has_ctrl106))
 		reg_addr += CONTROL_106_SIZE;
 
 	/* control 107 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_ctrl107))
+	    (f54->query_15.has_query25) && (f54->query_25.has_ctrl107))
 		reg_addr += CONTROL_107_SIZE;
 
 	/* control 108 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_ctrl108))
+	    (f54->query_15.has_query25) && (f54->query_25.has_ctrl108))
 		reg_addr += CONTROL_108_SIZE;
 
 	/* control 109 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_ctrl109))
+	    (f54->query_15.has_query25) && (f54->query_25.has_ctrl109))
 		reg_addr += CONTROL_109_SIZE;
 
 	/* control 110 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_ctrl110)) {
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) && (f54->query_27.has_ctrl110)) {
 		control->reg_110 = kzalloc(sizeof(*(control->reg_110)),
-				GFP_KERNEL);
+					   GFP_KERNEL);
 		if (!control->reg_110)
 			goto exit_no_mem;
 		control->reg_110->address = reg_addr;
@@ -2620,324 +2595,293 @@ static int test_set_controls(void)
 
 	/* control 111 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_ctrl111))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) && (f54->query_27.has_ctrl111))
 		reg_addr += CONTROL_111_SIZE;
 
 	/* control 112 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_ctrl112))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) && (f54->query_27.has_ctrl112))
 		reg_addr += CONTROL_112_SIZE;
 
 	/* control 113 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_ctrl113))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) && (f54->query_27.has_ctrl113))
 		reg_addr += CONTROL_113_SIZE;
 
 	/* control 114 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_ctrl114))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) && (f54->query_27.has_ctrl114))
 		reg_addr += CONTROL_114_SIZE;
 
 	/* control 115 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_ctrl115))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) && (f54->query_29.has_ctrl115))
 		reg_addr += CONTROL_115_SIZE;
 
 	/* control 116 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_ctrl116))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) && (f54->query_29.has_ctrl116))
 		reg_addr += CONTROL_116_SIZE;
 
 	/* control 117 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_ctrl117))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) && (f54->query_29.has_ctrl117))
 		reg_addr += CONTROL_117_SIZE;
 
 	/* control 118 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_ctrl118))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) && (f54->query_30.has_ctrl118))
 		reg_addr += CONTROL_118_SIZE;
 
 	/* control 119 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_ctrl119))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) && (f54->query_30.has_ctrl119))
 		reg_addr += CONTROL_119_SIZE;
 
 	/* control 120 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_ctrl120))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) && (f54->query_30.has_ctrl120))
 		reg_addr += CONTROL_120_SIZE;
 
 	/* control 121 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_ctrl121))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) && (f54->query_30.has_ctrl121))
 		reg_addr += CONTROL_121_SIZE;
 
 	/* control 122 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_ctrl122_query31))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) && (f54->query_30.has_ctrl122_query31))
 		reg_addr += CONTROL_122_SIZE;
 
 	/* control 123 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_ctrl123))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) && (f54->query_30.has_ctrl123))
 		reg_addr += CONTROL_123_SIZE;
 
 	/* control 124 reserved */
 
 	/* control 125 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_ctrl125))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) && (f54->query_32.has_ctrl125))
 		reg_addr += CONTROL_125_SIZE;
 
 	/* control 126 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_ctrl126))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) && (f54->query_32.has_ctrl126))
 		reg_addr += CONTROL_126_SIZE;
 
 	/* control 127 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_ctrl127))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) && (f54->query_32.has_ctrl127))
 		reg_addr += CONTROL_127_SIZE;
 
 	/* controls 128 129 130 131 reserved */
 
 	/* control 132 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_ctrl132))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) && (f54->query_33.has_ctrl132))
 		reg_addr += CONTROL_132_SIZE;
 
 	/* control 133 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_ctrl133))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) && (f54->query_33.has_ctrl133))
 		reg_addr += CONTROL_133_SIZE;
 
 	/* control 134 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_ctrl134))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) && (f54->query_33.has_ctrl134))
 		reg_addr += CONTROL_134_SIZE;
 
 	/* controls 135 136 reserved */
 
 	/* control 137 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query35) &&
-			(f54->query_35.has_ctrl137))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query35) && (f54->query_35.has_ctrl137))
 		reg_addr += CONTROL_137_SIZE;
 
 	/* control 138 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query35) &&
-			(f54->query_35.has_ctrl138))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query35) && (f54->query_35.has_ctrl138))
 		reg_addr += CONTROL_138_SIZE;
 
 	/* control 139 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query35) &&
-			(f54->query_35.has_ctrl139))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query35) && (f54->query_35.has_ctrl139))
 		reg_addr += CONTROL_139_SIZE;
 
 	/* control 140 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query35) &&
-			(f54->query_35.has_ctrl140))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query35) && (f54->query_35.has_ctrl140))
 		reg_addr += CONTROL_140_SIZE;
 
 	/* control 141 reserved */
 
 	/* control 142 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_query36) &&
-			(f54->query_36.has_ctrl142))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) &&
+	    (f54->query_33.has_query36) && (f54->query_36.has_ctrl142))
 		reg_addr += CONTROL_142_SIZE;
 
 	/* control 143 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_query36) &&
-			(f54->query_36.has_ctrl143))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) &&
+	    (f54->query_33.has_query36) && (f54->query_36.has_ctrl143))
 		reg_addr += CONTROL_143_SIZE;
 
 	/* control 144 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_query36) &&
-			(f54->query_36.has_ctrl144))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) &&
+	    (f54->query_33.has_query36) && (f54->query_36.has_ctrl144))
 		reg_addr += CONTROL_144_SIZE;
 
 	/* control 145 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_query36) &&
-			(f54->query_36.has_ctrl145))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) &&
+	    (f54->query_33.has_query36) && (f54->query_36.has_ctrl145))
 		reg_addr += CONTROL_145_SIZE;
 
 	/* control 146 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_query36) &&
-			(f54->query_36.has_ctrl146))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) &&
+	    (f54->query_33.has_query36) && (f54->query_36.has_ctrl146))
 		reg_addr += CONTROL_146_SIZE;
 
 	/* control 147 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_query36) &&
-			(f54->query_36.has_query38) &&
-			(f54->query_38.has_ctrl147))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) &&
+	    (f54->query_33.has_query36) &&
+	    (f54->query_36.has_query38) && (f54->query_38.has_ctrl147))
 		reg_addr += CONTROL_147_SIZE;
 
 	/* control 148 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_query36) &&
-			(f54->query_36.has_query38) &&
-			(f54->query_38.has_ctrl148))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) &&
+	    (f54->query_33.has_query36) &&
+	    (f54->query_36.has_query38) && (f54->query_38.has_ctrl148))
 		reg_addr += CONTROL_148_SIZE;
 
 	/* control 149 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_query36) &&
-			(f54->query_36.has_query38) &&
-			(f54->query_38.has_ctrl149)) {
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) &&
+	    (f54->query_33.has_query36) &&
+	    (f54->query_36.has_query38) && (f54->query_38.has_ctrl149)) {
 		control->reg_149 = kzalloc(sizeof(*(control->reg_149)),
-				GFP_KERNEL);
+					   GFP_KERNEL);
 		if (!control->reg_149)
 			goto exit_no_mem;
 		control->reg_149->address = reg_addr;
@@ -2946,10 +2890,9 @@ static int test_set_controls(void)
 
 	return 0;
 
-exit_no_mem:
+ exit_no_mem:
 	dev_err(rmi4_data->pdev->dev.parent,
-			"%s: Failed to alloc mem for control registers\n",
-			__func__);
+		"%s: Failed to alloc mem for control registers\n", __func__);
 	return -ENOMEM;
 }
 
@@ -2960,9 +2903,9 @@ static int test_set_queries(void)
 	struct synaptics_rmi4_data *rmi4_data = f54->rmi4_data;
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			f54->query_base_addr,
-			f54->query.data,
-			sizeof(f54->query.data));
+					 f54->query_base_addr,
+					 f54->query.data,
+					 sizeof(f54->query.data));
 	if (retval < 0)
 		return retval;
 
@@ -2975,9 +2918,9 @@ static int test_set_queries(void)
 	/* query 13 */
 	if (f54->query.has_query13) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_13.data,
-				sizeof(f54->query_13.data));
+						 f54->query_base_addr + offset,
+						 f54->query_13.data,
+						 sizeof(f54->query_13.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -2990,9 +2933,9 @@ static int test_set_queries(void)
 	/* query 15 */
 	if (f54->query.has_query15) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_15.data,
-				sizeof(f54->query_15.data));
+						 f54->query_base_addr + offset,
+						 f54->query_15.data,
+						 sizeof(f54->query_15.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3001,9 +2944,9 @@ static int test_set_queries(void)
 	/* query 16 */
 	if ((f54->query.has_query15) && (f54->query_15.has_query16)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_16.data,
-				sizeof(f54->query_16.data));
+						 f54->query_base_addr + offset,
+						 f54->query_16.data,
+						 sizeof(f54->query_16.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3011,20 +2954,17 @@ static int test_set_queries(void)
 
 	/* query 17 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query16) &&
-			(f54->query_16.has_query17))
+	    (f54->query_15.has_query16) && (f54->query_16.has_query17))
 		offset += 1;
 
 	/* query 18 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query16) &&
-			(f54->query_16.has_ctrl94_query18))
+	    (f54->query_15.has_query16) && (f54->query_16.has_ctrl94_query18))
 		offset += 1;
 
 	/* query 19 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query16) &&
-			(f54->query_16.has_ctrl95_query19))
+	    (f54->query_15.has_query16) && (f54->query_16.has_ctrl95_query19))
 		offset += 1;
 
 	/* query 20 */
@@ -3034,9 +2974,9 @@ static int test_set_queries(void)
 	/* query 21 */
 	if ((f54->query.has_query15) && (f54->query_15.has_query21)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_21.data,
-				sizeof(f54->query_21.data));
+						 f54->query_base_addr + offset,
+						 f54->query_21.data,
+						 sizeof(f54->query_21.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3045,9 +2985,9 @@ static int test_set_queries(void)
 	/* query 22 */
 	if ((f54->query.has_query15) && (f54->query_15.has_query22)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_22.data,
-				sizeof(f54->query_22.data));
+						 f54->query_base_addr + offset,
+						 f54->query_22.data,
+						 sizeof(f54->query_22.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3055,12 +2995,11 @@ static int test_set_queries(void)
 
 	/* query 23 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query22) &&
-			(f54->query_22.has_query23)) {
+	    (f54->query_15.has_query22) && (f54->query_22.has_query23)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_23.data,
-				sizeof(f54->query_23.data));
+						 f54->query_base_addr + offset,
+						 f54->query_23.data,
+						 sizeof(f54->query_23.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3068,16 +3007,15 @@ static int test_set_queries(void)
 
 	/* query 24 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query21) &&
-			(f54->query_21.has_query24_data18))
+	    (f54->query_15.has_query21) && (f54->query_21.has_query24_data18))
 		offset += 1;
 
 	/* query 25 */
 	if ((f54->query.has_query15) && (f54->query_15.has_query25)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_25.data,
-				sizeof(f54->query_25.data));
+						 f54->query_base_addr + offset,
+						 f54->query_25.data,
+						 sizeof(f54->query_25.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3085,18 +3023,16 @@ static int test_set_queries(void)
 
 	/* query 26 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query22) &&
-			(f54->query_22.has_ctrl103_query26))
+	    (f54->query_15.has_query22) && (f54->query_22.has_ctrl103_query26))
 		offset += 1;
 
 	/* query 27 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27)) {
+	    (f54->query_15.has_query25) && (f54->query_25.has_query27)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_27.data,
-				sizeof(f54->query_27.data));
+						 f54->query_base_addr + offset,
+						 f54->query_27.data,
+						 sizeof(f54->query_27.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3104,19 +3040,17 @@ static int test_set_queries(void)
 
 	/* query 28 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query22) &&
-			(f54->query_22.has_query28))
+	    (f54->query_15.has_query22) && (f54->query_22.has_query28))
 		offset += 1;
 
 	/* query 29 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29)) {
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) && (f54->query_27.has_query29)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_29.data,
-				sizeof(f54->query_29.data));
+						 f54->query_base_addr + offset,
+						 f54->query_29.data,
+						 sizeof(f54->query_29.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3124,14 +3058,13 @@ static int test_set_queries(void)
 
 	/* query 30 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30)) {
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) && (f54->query_29.has_query30)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_30.data,
-				sizeof(f54->query_30.data));
+						 f54->query_base_addr + offset,
+						 f54->query_30.data,
+						 sizeof(f54->query_30.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3139,24 +3072,22 @@ static int test_set_queries(void)
 
 	/* query 31 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_ctrl122_query31))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) && (f54->query_30.has_ctrl122_query31))
 		offset += 1;
 
 	/* query 32 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32)) {
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) && (f54->query_30.has_query32)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_32.data,
-				sizeof(f54->query_32.data));
+						 f54->query_base_addr + offset,
+						 f54->query_32.data,
+						 sizeof(f54->query_32.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3164,16 +3095,15 @@ static int test_set_queries(void)
 
 	/* query 33 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33)) {
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) && (f54->query_32.has_query33)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_33.data,
-				sizeof(f54->query_33.data));
+						 f54->query_base_addr + offset,
+						 f54->query_33.data,
+						 sizeof(f54->query_33.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3181,26 +3111,24 @@ static int test_set_queries(void)
 
 	/* query 34 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query34))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) && (f54->query_32.has_query34))
 		offset += 1;
 
 	/* query 35 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query35)) {
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) && (f54->query_32.has_query35)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_35.data,
-				sizeof(f54->query_35.data));
+						 f54->query_base_addr + offset,
+						 f54->query_35.data,
+						 sizeof(f54->query_35.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3208,17 +3136,16 @@ static int test_set_queries(void)
 
 	/* query 36 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_query36)) {
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) && (f54->query_33.has_query36)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_36.data,
-				sizeof(f54->query_36.data));
+						 f54->query_base_addr + offset,
+						 f54->query_36.data,
+						 sizeof(f54->query_36.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3226,30 +3153,28 @@ static int test_set_queries(void)
 
 	/* query 37 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_query36) &&
-			(f54->query_36.has_query37))
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) &&
+	    (f54->query_33.has_query36) && (f54->query_36.has_query37))
 		offset += 1;
 
 	/* query 38 */
 	if ((f54->query.has_query15) &&
-			(f54->query_15.has_query25) &&
-			(f54->query_25.has_query27) &&
-			(f54->query_27.has_query29) &&
-			(f54->query_29.has_query30) &&
-			(f54->query_30.has_query32) &&
-			(f54->query_32.has_query33) &&
-			(f54->query_33.has_query36) &&
-			(f54->query_36.has_query38)) {
+	    (f54->query_15.has_query25) &&
+	    (f54->query_25.has_query27) &&
+	    (f54->query_27.has_query29) &&
+	    (f54->query_29.has_query30) &&
+	    (f54->query_30.has_query32) &&
+	    (f54->query_32.has_query33) &&
+	    (f54->query_33.has_query36) && (f54->query_36.has_query38)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f54->query_base_addr + offset,
-				f54->query_38.data,
-				sizeof(f54->query_38.data));
+						 f54->query_base_addr + offset,
+						 f54->query_38.data,
+						 sizeof(f54->query_38.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3259,9 +3184,8 @@ static int test_set_queries(void)
 }
 
 static void test_f54_set_regs(struct synaptics_rmi4_data *rmi4_data,
-		struct synaptics_rmi4_fn_desc *fd,
-		unsigned int intr_count,
-		unsigned char page)
+			      struct synaptics_rmi4_fn_desc *fd,
+			      unsigned int intr_count, unsigned char page)
 {
 	unsigned char ii;
 	unsigned char intr_offset;
@@ -3277,9 +3201,7 @@ static void test_f54_set_regs(struct synaptics_rmi4_data *rmi4_data,
 
 	f54->intr_mask = 0;
 	intr_offset = intr_count % 8;
-	for (ii = intr_offset;
-			ii < (fd->intr_src_count + intr_offset);
-			ii++) {
+	for (ii = intr_offset; ii < (fd->intr_src_count + intr_offset); ii++) {
 		f54->intr_mask |= 1 << ii;
 	}
 
@@ -3293,9 +3215,9 @@ static int test_f55_set_queries(void)
 	struct synaptics_rmi4_data *rmi4_data = f54->rmi4_data;
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			f55->query_base_addr,
-			f55->query.data,
-			sizeof(f55->query.data));
+					 f55->query_base_addr,
+					 f55->query.data,
+					 sizeof(f55->query.data));
 	if (retval < 0)
 		return retval;
 
@@ -3304,9 +3226,9 @@ static int test_f55_set_queries(void)
 	/* query 3 */
 	if (f55->query.has_single_layer_multi_touch) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f55->query_base_addr + offset,
-				f55->query_3.data,
-				sizeof(f55->query_3.data));
+						 f55->query_base_addr + offset,
+						 f55->query_3.data,
+						 sizeof(f55->query_3.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3314,15 +3236,15 @@ static int test_f55_set_queries(void)
 
 	/* query 4 */
 	if ((f55->query.has_single_layer_multi_touch) &&
-			(f55->query_3.has_ctrl9))
+	    (f55->query_3.has_ctrl9))
 		offset += 1;
 
 	/* query 5 */
 	if (f55->query.has_query5) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f55->query_base_addr + offset,
-				f55->query_5.data,
-				sizeof(f55->query_5.data));
+						 f55->query_base_addr + offset,
+						 f55->query_5.data,
+						 sizeof(f55->query_5.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3333,13 +3255,12 @@ static int test_f55_set_queries(void)
 		offset += 2;
 
 	/* query 8 */
-	if ((f55->query.has_single_layer_multi_touch) &&
-			f55->query_3.has_ctrl8)
+	if ((f55->query.has_single_layer_multi_touch) && f55->query_3.has_ctrl8)
 		offset += 1;
 
 	/* query 9 */
 	if ((f55->query.has_single_layer_multi_touch) &&
-			f55->query_3.has_query9)
+	    f55->query_3.has_query9)
 		offset += 1;
 
 	/* queries 10 11 12 13 14 15 16 */
@@ -3349,9 +3270,9 @@ static int test_f55_set_queries(void)
 	/* query 17 */
 	if ((f55->query.has_query5) && (f55->query_5.has_query17)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f55->query_base_addr + offset,
-				f55->query_17.data,
-				sizeof(f55->query_17.data));
+						 f55->query_base_addr + offset,
+						 f55->query_17.data,
+						 sizeof(f55->query_17.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3359,12 +3280,11 @@ static int test_f55_set_queries(void)
 
 	/* query 18 */
 	if ((f55->query.has_query5) &&
-			(f55->query_5.has_query17) &&
-			(f55->query_17.has_query18)) {
+	    (f55->query_5.has_query17) && (f55->query_17.has_query18)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f55->query_base_addr + offset,
-				f55->query_18.data,
-				sizeof(f55->query_18.data));
+						 f55->query_base_addr + offset,
+						 f55->query_18.data,
+						 sizeof(f55->query_18.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3372,13 +3292,12 @@ static int test_f55_set_queries(void)
 
 	/* query 22 */
 	if ((f55->query.has_query5) &&
-			(f55->query_5.has_query17) &&
-			(f55->query_17.has_query18) &&
-			(f55->query_18.has_query22)) {
+	    (f55->query_5.has_query17) &&
+	    (f55->query_17.has_query18) && (f55->query_18.has_query22)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f55->query_base_addr + offset,
-				f55->query_22.data,
-				sizeof(f55->query_22.data));
+						 f55->query_base_addr + offset,
+						 f55->query_22.data,
+						 sizeof(f55->query_22.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3386,14 +3305,13 @@ static int test_f55_set_queries(void)
 
 	/* query 23 */
 	if ((f55->query.has_query5) &&
-			(f55->query_5.has_query17) &&
-			(f55->query_17.has_query18) &&
-			(f55->query_18.has_query22) &&
-			(f55->query_22.has_query23)) {
+	    (f55->query_5.has_query17) &&
+	    (f55->query_17.has_query18) &&
+	    (f55->query_18.has_query22) && (f55->query_22.has_query23)) {
 		retval = synaptics_rmi4_reg_read(rmi4_data,
-				f55->query_base_addr + offset,
-				f55->query_23.data,
-				sizeof(f55->query_23.data));
+						 f55->query_base_addr + offset,
+						 f55->query_23.data,
+						 sizeof(f55->query_23.data));
 		if (retval < 0)
 			return retval;
 		offset += 1;
@@ -3415,8 +3333,7 @@ static void test_f55_init(struct synaptics_rmi4_data *rmi4_data)
 	retval = test_f55_set_queries();
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to read f55 query registers\n",
-				__func__);
+			"%s: Failed to read f55 query registers\n", __func__);
 		return;
 	}
 
@@ -3427,24 +3344,22 @@ static void test_f55_init(struct synaptics_rmi4_data *rmi4_data)
 	f55->rx_assignment = kzalloc(rx_electrodes, GFP_KERNEL);
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			f55->control_base_addr + SENSOR_TX_MAPPING_OFFSET,
-			f55->tx_assignment,
-			tx_electrodes);
+					 f55->control_base_addr +
+					 SENSOR_TX_MAPPING_OFFSET,
+					 f55->tx_assignment, tx_electrodes);
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to read f55 tx assignment\n",
-				__func__);
+			"%s: Failed to read f55 tx assignment\n", __func__);
 		return;
 	}
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			f55->control_base_addr + SENSOR_RX_MAPPING_OFFSET,
-			f55->rx_assignment,
-			rx_electrodes);
+					 f55->control_base_addr +
+					 SENSOR_RX_MAPPING_OFFSET,
+					 f55->rx_assignment, rx_electrodes);
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to read f55 rx assignment\n",
-				__func__);
+			"%s: Failed to read f55 rx assignment\n", __func__);
 		return;
 	}
 
@@ -3469,14 +3384,13 @@ static void test_f55_init(struct synaptics_rmi4_data *rmi4_data)
 }
 
 static void test_f55_set_regs(struct synaptics_rmi4_data *rmi4_data,
-		struct synaptics_rmi4_fn_desc *fd,
-		unsigned char page)
+			      struct synaptics_rmi4_fn_desc *fd,
+			      unsigned char page)
 {
 	f55 = kzalloc(sizeof(*f55), GFP_KERNEL);
 	if (!f55) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to alloc mem for f55\n",
-				__func__);
+			"%s: Failed to alloc mem for f55\n", __func__);
 		return;
 	}
 
@@ -3504,9 +3418,10 @@ static int test_scan_pdt(void)
 			addr |= (page << 8);
 
 			retval = synaptics_rmi4_reg_read(rmi4_data,
-					addr,
-					(unsigned char *)&rmi_fd,
-					sizeof(rmi_fd));
+							 addr,
+							 (unsigned char *)
+							 &rmi_fd,
+							 sizeof(rmi_fd));
 			if (retval < 0)
 				return retval;
 
@@ -3518,12 +3433,11 @@ static int test_scan_pdt(void)
 			switch (rmi_fd.fn_number) {
 			case SYNAPTICS_RMI4_F54:
 				test_f54_set_regs(rmi4_data,
-						&rmi_fd, intr_count, page);
+						  &rmi_fd, intr_count, page);
 				f54found = true;
 				break;
 			case SYNAPTICS_RMI4_F55:
-				test_f55_set_regs(rmi4_data,
-						&rmi_fd, page);
+				test_f55_set_regs(rmi4_data, &rmi_fd, page);
 				f55found = true;
 				break;
 			default:
@@ -3539,17 +3453,16 @@ static int test_scan_pdt(void)
 
 	if (!f54found) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to find F54\n",
-				__func__);
+			"%s: Failed to find F54\n", __func__);
 		return -EINVAL;
 	}
 
-pdt_done:
+ pdt_done:
 	return 0;
 }
 
 static void synaptics_rmi4_test_attn(struct synaptics_rmi4_data *rmi4_data,
-		unsigned char intr_mask)
+				     unsigned char intr_mask)
 {
 	if (!f54)
 		return;
@@ -3566,16 +3479,14 @@ static int synaptics_rmi4_test_init(struct synaptics_rmi4_data *rmi4_data)
 
 	if (f54) {
 		dev_dbg(rmi4_data->pdev->dev.parent,
-				"%s: Handle already exists\n",
-				__func__);
+			"%s: Handle already exists\n", __func__);
 		return 0;
 	}
 
 	f54 = kzalloc(sizeof(*f54), GFP_KERNEL);
 	if (!f54) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to alloc mem for f54\n",
-				__func__);
+			"%s: Failed to alloc mem for f54\n", __func__);
 		retval = -ENOMEM;
 		goto exit;
 	}
@@ -3591,8 +3502,7 @@ static int synaptics_rmi4_test_init(struct synaptics_rmi4_data *rmi4_data)
 	retval = test_set_queries();
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to read f54 query registers\n",
-				__func__);
+			"%s: Failed to read f54 query registers\n", __func__);
 		goto exit_free_mem;
 	}
 
@@ -3602,8 +3512,8 @@ static int synaptics_rmi4_test_init(struct synaptics_rmi4_data *rmi4_data)
 	retval = test_set_controls();
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to set up f54 control registers\n",
-				__func__);
+			"%s: Failed to set up f54 control registers\n",
+			__func__);
 		goto exit_free_control;
 	}
 
@@ -3613,13 +3523,12 @@ static int synaptics_rmi4_test_init(struct synaptics_rmi4_data *rmi4_data)
 	retval = test_set_sysfs();
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to create sysfs entries\n",
-				__func__);
+			"%s: Failed to create sysfs entries\n", __func__);
 		goto exit_sysfs;
 	}
 
 	f54->test_report_workqueue =
-			create_singlethread_workqueue("test_report_workqueue");
+	    create_singlethread_workqueue("test_report_workqueue");
 	INIT_WORK(&f54->test_report_work, test_report_work);
 
 	hrtimer_init(&f54->watchdog, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
@@ -3631,22 +3540,22 @@ static int synaptics_rmi4_test_init(struct synaptics_rmi4_data *rmi4_data)
 
 	return 0;
 
-exit_sysfs:
+ exit_sysfs:
 	if (f55) {
 		kfree(f55->tx_assignment);
 		kfree(f55->rx_assignment);
 	}
 
-exit_free_control:
+ exit_free_control:
 	test_free_control_mem();
 
-exit_free_mem:
+ exit_free_mem:
 	kfree(f55);
 	f55 = NULL;
 	kfree(f54);
 	f54 = NULL;
 
-exit:
+ exit:
 	return retval;
 }
 
@@ -3679,7 +3588,7 @@ static void synaptics_rmi4_test_remove(struct synaptics_rmi4_data *rmi4_data)
 	kfree(f54);
 	f54 = NULL;
 
-exit:
+ exit:
 	complete(&test_remove_complete);
 
 	return;
@@ -3711,8 +3620,7 @@ static void synaptics_rmi4_test_reset(struct synaptics_rmi4_data *rmi4_data)
 	retval = test_set_queries();
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to read f54 query registers\n",
-				__func__);
+			"%s: Failed to read f54 query registers\n", __func__);
 		goto exit_free_mem;
 	}
 
@@ -3722,8 +3630,8 @@ static void synaptics_rmi4_test_reset(struct synaptics_rmi4_data *rmi4_data)
 	retval = test_set_controls();
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to set up f54 control registers\n",
-				__func__);
+			"%s: Failed to set up f54 control registers\n",
+			__func__);
 		goto exit_free_control;
 	}
 
@@ -3734,10 +3642,10 @@ static void synaptics_rmi4_test_reset(struct synaptics_rmi4_data *rmi4_data)
 
 	return;
 
-exit_free_control:
+ exit_free_control:
 	test_free_control_mem();
 
-exit_free_mem:
+ exit_free_mem:
 	hrtimer_cancel(&f54->watchdog);
 
 	cancel_work_sync(&f54->test_report_work);

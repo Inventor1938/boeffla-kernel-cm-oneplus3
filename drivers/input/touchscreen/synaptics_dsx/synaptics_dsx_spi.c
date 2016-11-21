@@ -31,7 +31,7 @@
 #define SPI_WRITE 0x00
 
 static int synaptics_rmi4_spi_set_page(struct synaptics_rmi4_data *rmi4_data,
-		unsigned short addr)
+				       unsigned short addr)
 {
 	int retval;
 	unsigned int index;
@@ -42,7 +42,7 @@ static int synaptics_rmi4_spi_set_page(struct synaptics_rmi4_data *rmi4_data,
 	struct spi_transfer xfers[xfer_count];
 	struct spi_device *spi = to_spi_device(rmi4_data->pdev->dev.parent);
 	const struct synaptics_dsx_board_data *bdata =
-			rmi4_data->hw_if->board_data;
+	    rmi4_data->hw_if->board_data;
 
 	page = ((addr >> 8) & ~MASK_7BIT);
 	if (page != rmi4_data->current_page) {
@@ -69,8 +69,8 @@ static int synaptics_rmi4_spi_set_page(struct synaptics_rmi4_data *rmi4_data,
 			retval = PAGE_SELECT_LEN;
 		} else {
 			dev_err(rmi4_data->pdev->dev.parent,
-					"%s: Failed to complete SPI transfer, error = %d\n",
-					__func__, retval);
+				"%s: Failed to complete SPI transfer, error = %d\n",
+				__func__, retval);
 		}
 	} else {
 		retval = PAGE_SELECT_LEN;
@@ -80,7 +80,8 @@ static int synaptics_rmi4_spi_set_page(struct synaptics_rmi4_data *rmi4_data,
 }
 
 static int synaptics_rmi4_spi_read(struct synaptics_rmi4_data *rmi4_data,
-		unsigned short addr, unsigned char *data, unsigned short length)
+				   unsigned short addr, unsigned char *data,
+				   unsigned short length)
 {
 	int retval;
 	unsigned int index;
@@ -91,15 +92,14 @@ static int synaptics_rmi4_spi_read(struct synaptics_rmi4_data *rmi4_data,
 	struct spi_transfer *xfers = NULL;
 	struct spi_device *spi = to_spi_device(rmi4_data->pdev->dev.parent);
 	const struct synaptics_dsx_board_data *bdata =
-			rmi4_data->hw_if->board_data;
+	    rmi4_data->hw_if->board_data;
 
 	spi_message_init(&msg);
 
 	xfers = kcalloc(xfer_count, sizeof(struct spi_transfer), GFP_KERNEL);
 	if (!xfers) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to allocate memory for xfers\n",
-				__func__);
+			"%s: Failed to allocate memory for xfers\n", __func__);
 		retval = -ENOMEM;
 		goto exit;
 	}
@@ -110,8 +110,7 @@ static int synaptics_rmi4_spi_read(struct synaptics_rmi4_data *rmi4_data,
 	rxbuf = kmalloc(length, GFP_KERNEL);
 	if (!rxbuf) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to allocate memory for rxbuf\n",
-				__func__);
+			"%s: Failed to allocate memory for rxbuf\n", __func__);
 		retval = -ENOMEM;
 		goto exit;
 	}
@@ -143,13 +142,13 @@ static int synaptics_rmi4_spi_read(struct synaptics_rmi4_data *rmi4_data,
 		memcpy(data, rxbuf, length);
 	} else {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to complete SPI transfer, error = %d\n",
-				__func__, retval);
+			"%s: Failed to complete SPI transfer, error = %d\n",
+			__func__, retval);
 	}
 
 	mutex_unlock(&rmi4_data->rmi4_io_ctrl_mutex);
 
-exit:
+ exit:
 	kfree(rxbuf);
 	kfree(xfers);
 
@@ -157,7 +156,8 @@ exit:
 }
 
 static int synaptics_rmi4_spi_write(struct synaptics_rmi4_data *rmi4_data,
-		unsigned short addr, unsigned char *data, unsigned short length)
+				    unsigned short addr, unsigned char *data,
+				    unsigned short length)
 {
 	int retval;
 	unsigned int index;
@@ -167,15 +167,14 @@ static int synaptics_rmi4_spi_write(struct synaptics_rmi4_data *rmi4_data,
 	struct spi_transfer *xfers = NULL;
 	struct spi_device *spi = to_spi_device(rmi4_data->pdev->dev.parent);
 	const struct synaptics_dsx_board_data *bdata =
-			rmi4_data->hw_if->board_data;
+	    rmi4_data->hw_if->board_data;
 
 	spi_message_init(&msg);
 
 	xfers = kcalloc(xfer_count, sizeof(struct spi_transfer), GFP_KERNEL);
 	if (!xfers) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to allocate memory for xfers\n",
-				__func__);
+			"%s: Failed to allocate memory for xfers\n", __func__);
 		retval = -ENOMEM;
 		goto exit;
 	}
@@ -183,8 +182,7 @@ static int synaptics_rmi4_spi_write(struct synaptics_rmi4_data *rmi4_data,
 	txbuf = kmalloc(xfer_count, GFP_KERNEL);
 	if (!txbuf) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to allocate memory for txbuf\n",
-				__func__);
+			"%s: Failed to allocate memory for txbuf\n", __func__);
 		retval = -ENOMEM;
 		goto exit;
 	}
@@ -216,13 +214,13 @@ static int synaptics_rmi4_spi_write(struct synaptics_rmi4_data *rmi4_data,
 		retval = length;
 	} else {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to complete SPI transfer, error = %d\n",
-				__func__, retval);
+			"%s: Failed to complete SPI transfer, error = %d\n",
+			__func__, retval);
 	}
 
 	mutex_unlock(&rmi4_data->rmi4_io_ctrl_mutex);
 
-exit:
+ exit:
 	kfree(txbuf);
 	kfree(xfers);
 
@@ -252,18 +250,16 @@ static int synaptics_rmi4_spi_probe(struct spi_device *spi)
 
 	if (spi->master->flags & SPI_MASTER_HALF_DUPLEX) {
 		dev_err(&spi->dev,
-				"%s: Full duplex not supported by host\n",
-				__func__);
+			"%s: Full duplex not supported by host\n", __func__);
 		return -EIO;
 	}
 
-	synaptics_dsx_spi_device = kzalloc(
-			sizeof(struct platform_device),
-			GFP_KERNEL);
+	synaptics_dsx_spi_device = kzalloc(sizeof(struct platform_device),
+					   GFP_KERNEL);
 	if (!synaptics_dsx_spi_device) {
 		dev_err(&spi->dev,
-				"%s: Failed to allocate memory for synaptics_dsx_spi_device\n",
-				__func__);
+			"%s: Failed to allocate memory for synaptics_dsx_spi_device\n",
+			__func__);
 		return -ENOMEM;
 	}
 
@@ -273,8 +269,7 @@ static int synaptics_rmi4_spi_probe(struct spi_device *spi)
 	retval = spi_setup(spi);
 	if (retval < 0) {
 		dev_err(&spi->dev,
-				"%s: Failed to perform SPI setup\n",
-				__func__);
+			"%s: Failed to perform SPI setup\n", __func__);
 		return retval;
 	}
 
@@ -291,8 +286,7 @@ static int synaptics_rmi4_spi_probe(struct spi_device *spi)
 	retval = platform_device_register(synaptics_dsx_spi_device);
 	if (retval) {
 		dev_err(&spi->dev,
-				"%s: Failed to register platform device\n",
-				__func__);
+			"%s: Failed to register platform device\n", __func__);
 		return -ENODEV;
 	}
 
@@ -308,18 +302,18 @@ static int synaptics_rmi4_spi_remove(struct spi_device *spi)
 
 static struct spi_driver synaptics_rmi4_spi_driver = {
 	.driver = {
-		.name = SPI_DRIVER_NAME,
-		.owner = THIS_MODULE,
-	},
+		   .name = SPI_DRIVER_NAME,
+		   .owner = THIS_MODULE,
+		   },
 	.probe = synaptics_rmi4_spi_probe,
 	.remove = __devexit_p(synaptics_rmi4_spi_remove),
 };
-
 
 int synaptics_rmi4_bus_init(void)
 {
 	return spi_register_driver(&synaptics_rmi4_spi_driver);
 }
+
 EXPORT_SYMBOL(synaptics_rmi4_bus_init);
 
 void synaptics_rmi4_bus_exit(void)
@@ -328,6 +322,7 @@ void synaptics_rmi4_bus_exit(void)
 
 	return;
 }
+
 EXPORT_SYMBOL(synaptics_rmi4_bus_exit);
 
 MODULE_AUTHOR("Synaptics, Inc.");

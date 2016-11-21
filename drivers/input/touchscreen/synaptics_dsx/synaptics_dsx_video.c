@@ -32,10 +32,12 @@
 */
 
 static ssize_t video_sysfs_dcs_write_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count);
+					   struct device_attribute *attr,
+					   const char *buf, size_t count);
 
 static ssize_t video_sysfs_param_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count);
+				       struct device_attribute *attr,
+				       const char *buf, size_t count);
 
 static int video_send_dcs_command(unsigned char command_opcode);
 
@@ -75,34 +77,34 @@ struct dcs_command {
 
 static struct dcs_command suspend_sequence[] = {
 	{
-		.command = 0x28,
-		.wait_time = 200,
-	},
+	 .command = 0x28,
+	 .wait_time = 200,
+	 },
 	{
-		.command = 0x10,
-		.wait_time = 200,
-	},
+	 .command = 0x10,
+	 .wait_time = 200,
+	 },
 };
 
 static struct dcs_command resume_sequence[] = {
 	{
-		.command = 0x11,
-		.wait_time = 200,
-	},
+	 .command = 0x11,
+	 .wait_time = 200,
+	 },
 	{
-		.command = 0x29,
-		.wait_time = 200,
-	},
+	 .command = 0x29,
+	 .wait_time = 200,
+	 },
 };
 #endif
 
 static struct device_attribute attrs[] = {
 	__ATTR(dcs_write, S_IWUGO,
-			synaptics_rmi4_show_error,
-			video_sysfs_dcs_write_store),
+	       synaptics_rmi4_show_error,
+	       video_sysfs_dcs_write_store),
 	__ATTR(param, S_IWUGO,
-			synaptics_rmi4_show_error,
-			video_sysfs_param_store),
+	       synaptics_rmi4_show_error,
+	       video_sysfs_param_store),
 };
 
 static struct synaptics_rmi4_video_handle *video;
@@ -110,7 +112,8 @@ static struct synaptics_rmi4_video_handle *video;
 DECLARE_COMPLETION(video_remove_complete);
 
 static ssize_t video_sysfs_dcs_write_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+					   struct device_attribute *attr,
+					   const char *buf, size_t count)
 {
 	int retval;
 	unsigned int input;
@@ -126,7 +129,8 @@ static ssize_t video_sysfs_dcs_write_store(struct device *dev,
 }
 
 static ssize_t video_sysfs_param_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+				       struct device_attribute *attr,
+				       const char *buf, size_t count)
 {
 	unsigned int input;
 
@@ -153,13 +157,11 @@ static int video_send_dcs_command(unsigned char command_opcode)
 	video->param = 0;
 
 	retval = synaptics_rmi4_reg_write(rmi4_data,
-			video->command_base_addr,
-			command.data,
-			sizeof(command.data));
+					  video->command_base_addr,
+					  command.data, sizeof(command.data));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to send DCS command\n",
-				__func__);
+			"%s: Failed to send DCS command\n", __func__);
 		return retval;
 	}
 
@@ -180,9 +182,10 @@ static int video_scan_pdt(void)
 			addr |= (page << 8);
 
 			retval = synaptics_rmi4_reg_read(rmi4_data,
-					addr,
-					(unsigned char *)&rmi_fd,
-					sizeof(rmi_fd));
+							 addr,
+							 (unsigned char *)
+							 &rmi_fd,
+							 sizeof(rmi_fd));
 			if (retval < 0)
 				return retval;
 
@@ -200,12 +203,11 @@ static int video_scan_pdt(void)
 
 	if (!f38_found) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to find F38\n",
-				__func__);
+			"%s: Failed to find F38\n", __func__);
 		return -EINVAL;
 	}
 
-f38_found:
+ f38_found:
 	video->query_base_addr = rmi_fd.query_base_addr | (page << 8);
 	video->control_base_addr = rmi_fd.ctrl_base_addr | (page << 8);
 	video->data_base_addr = rmi_fd.data_base_addr | (page << 8);
@@ -221,16 +223,14 @@ static int synaptics_rmi4_video_init(struct synaptics_rmi4_data *rmi4_data)
 
 	if (video) {
 		dev_dbg(rmi4_data->pdev->dev.parent,
-				"%s: Handle already exists\n",
-				__func__);
+			"%s: Handle already exists\n", __func__);
 		return 0;
 	}
 
 	video = kzalloc(sizeof(*video), GFP_KERNEL);
 	if (!video) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to alloc mem for video\n",
-				__func__);
+			"%s: Failed to alloc mem for video\n", __func__);
 		retval = -ENOMEM;
 		goto exit;
 	}
@@ -244,22 +244,22 @@ static int synaptics_rmi4_video_init(struct synaptics_rmi4_data *rmi4_data)
 	}
 
 	video->sysfs_dir = kobject_create_and_add(SYSFS_FOLDER_NAME,
-			&rmi4_data->input_dev->dev.kobj);
+						  &rmi4_data->input_dev->dev.
+						  kobj);
 	if (!video->sysfs_dir) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to create sysfs directory\n",
-				__func__);
+			"%s: Failed to create sysfs directory\n", __func__);
 		retval = -ENODEV;
 		goto exit_sysfs_dir;
 	}
 
 	for (attr_count = 0; attr_count < ARRAY_SIZE(attrs); attr_count++) {
 		retval = sysfs_create_file(video->sysfs_dir,
-				&attrs[attr_count].attr);
+					   &attrs[attr_count].attr);
 		if (retval < 0) {
 			dev_err(rmi4_data->pdev->dev.parent,
-					"%s: Failed to create sysfs attributes\n",
-					__func__);
+				"%s: Failed to create sysfs attributes\n",
+				__func__);
 			retval = -ENODEV;
 			goto exit_sysfs_attrs;
 		}
@@ -267,18 +267,18 @@ static int synaptics_rmi4_video_init(struct synaptics_rmi4_data *rmi4_data)
 
 	return 0;
 
-exit_sysfs_attrs:
+ exit_sysfs_attrs:
 	for (attr_count--; attr_count >= 0; attr_count--)
 		sysfs_remove_file(video->sysfs_dir, &attrs[attr_count].attr);
 
 	kobject_put(video->sysfs_dir);
 
-exit_sysfs_dir:
-exit_scan_pdt:
+ exit_sysfs_dir:
+ exit_scan_pdt:
 	kfree(video);
 	video = NULL;
 
-exit:
+ exit:
 	return retval;
 }
 
@@ -297,7 +297,7 @@ static void synaptics_rmi4_video_remove(struct synaptics_rmi4_data *rmi4_data)
 	kfree(video);
 	video = NULL;
 
-exit:
+ exit:
 	complete(&video_remove_complete);
 
 	return;

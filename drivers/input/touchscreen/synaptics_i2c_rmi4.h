@@ -261,12 +261,14 @@ struct synaptics_rmi4_data {
 	wait_queue_head_t wait;
 	bool stay_awake;
 	bool staying_awake;
-	int (*i2c_read)(struct synaptics_rmi4_data *pdata, unsigned short addr,
-			unsigned char *data, unsigned short length);
-	int (*i2c_write)(struct synaptics_rmi4_data *pdata, unsigned short addr,
-			unsigned char *data, unsigned short length);
-	int (*irq_enable)(struct synaptics_rmi4_data *rmi4_data, bool enable);
-	int (*reset_device)(struct synaptics_rmi4_data *rmi4_data);
+	int (*i2c_read) (struct synaptics_rmi4_data * pdata,
+			 unsigned short addr, unsigned char *data,
+			 unsigned short length);
+	int (*i2c_write) (struct synaptics_rmi4_data * pdata,
+			  unsigned short addr, unsigned char *data,
+			  unsigned short length);
+	int (*irq_enable) (struct synaptics_rmi4_data * rmi4_data, bool enable);
+	int (*reset_device) (struct synaptics_rmi4_data * rmi4_data);
 #ifdef CONFIG_FB
 	struct notifier_block fb_notif;
 #else
@@ -298,24 +300,30 @@ enum exp_fn {
 };
 
 struct synaptics_rmi4_exp_fn_ptr {
-	int (*read)(struct synaptics_rmi4_data *rmi4_data, unsigned short addr,
-			unsigned char *data, unsigned short length);
-	int (*write)(struct synaptics_rmi4_data *rmi4_data, unsigned short addr,
-			unsigned char *data, unsigned short length);
-	int (*enable)(struct synaptics_rmi4_data *rmi4_data, bool enable);
+	int (*read) (struct synaptics_rmi4_data * rmi4_data,
+		     unsigned short addr, unsigned char *data,
+		     unsigned short length);
+	int (*write) (struct synaptics_rmi4_data * rmi4_data,
+		      unsigned short addr, unsigned char *data,
+		      unsigned short length);
+	int (*enable) (struct synaptics_rmi4_data * rmi4_data, bool enable);
 };
 
 void synaptics_rmi4_new_function(enum exp_fn fn_type, bool insert,
-		int (*func_init)(struct synaptics_rmi4_data *rmi4_data),
-		void (*func_remove)(struct synaptics_rmi4_data *rmi4_data),
-		void (*func_attn)(struct synaptics_rmi4_data *rmi4_data,
-				unsigned char intr_mask));
+				 int (*func_init) (struct synaptics_rmi4_data *
+						   rmi4_data),
+				 void (*func_remove) (struct synaptics_rmi4_data
+						      * rmi4_data),
+				 void (*func_attn) (struct synaptics_rmi4_data *
+						    rmi4_data,
+						    unsigned char intr_mask));
 
 static inline ssize_t synaptics_rmi4_store_error(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+						 struct device_attribute *attr,
+						 const char *buf, size_t count)
 {
 	dev_warn(dev, "%s Attempted to write to read-only attribute %s\n",
-			__func__, attr->attr.name);
+		 __func__, attr->attr.name);
 	return -EPERM;
 }
 

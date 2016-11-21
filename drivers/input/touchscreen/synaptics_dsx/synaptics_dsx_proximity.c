@@ -33,15 +33,18 @@
 #define HOVERING_FINGER_EN (1 << 4)
 
 static ssize_t synaptics_rmi4_hover_finger_en_show(struct device *dev,
-		struct device_attribute *attr, char *buf);
+						   struct device_attribute
+						   *attr, char *buf);
 
 static ssize_t synaptics_rmi4_hover_finger_en_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count);
+						    struct device_attribute
+						    *attr, const char *buf,
+						    size_t count);
 
 static struct device_attribute attrs[] = {
 	__ATTR(hover_finger_en, (S_IRUGO | S_IWUGO),
-			synaptics_rmi4_hover_finger_en_show,
-			synaptics_rmi4_hover_finger_en_store),
+	       synaptics_rmi4_hover_finger_en_show,
+	       synaptics_rmi4_hover_finger_en_store),
 };
 
 struct synaptics_rmi4_f12_query_5 {
@@ -157,13 +160,12 @@ static void prox_hover_finger_report(void)
 	data = prox->finger_data;
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			prox->hover_finger_data_addr,
-			data->proximity_data,
-			sizeof(data->proximity_data));
+					 prox->hover_finger_data_addr,
+					 data->proximity_data,
+					 sizeof(data->proximity_data));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to read hovering finger data\n",
-				__func__);
+			"%s: Failed to read hovering finger data\n", __func__);
 		return;
 	}
 
@@ -187,8 +189,7 @@ static void prox_hover_finger_report(void)
 	input_sync(prox->prox_dev);
 
 	dev_dbg(rmi4_data->pdev->dev.parent,
-			"%s: x = %d y = %d z = %d\n",
-			__func__, x, y, z);
+		"%s: x = %d y = %d z = %d\n", __func__, x, y, z);
 
 	prox->hover_finger_present = true;
 
@@ -202,13 +203,13 @@ static int prox_set_hover_finger_en(void)
 	struct synaptics_rmi4_data *rmi4_data = prox->rmi4_data;
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			prox->hover_finger_en_addr,
-			&object_report_enable,
-			sizeof(object_report_enable));
+					 prox->hover_finger_en_addr,
+					 &object_report_enable,
+					 sizeof(object_report_enable));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to read from object report enable register\n",
-				__func__);
+			"%s: Failed to read from object report enable register\n",
+			__func__);
 		return retval;
 	}
 
@@ -218,13 +219,13 @@ static int prox_set_hover_finger_en(void)
 		object_report_enable &= ~HOVERING_FINGER_EN;
 
 	retval = synaptics_rmi4_reg_write(rmi4_data,
-			prox->hover_finger_en_addr,
-			&object_report_enable,
-			sizeof(object_report_enable));
+					  prox->hover_finger_en_addr,
+					  &object_report_enable,
+					  sizeof(object_report_enable));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to write to object report enable register\n",
-				__func__);
+			"%s: Failed to write to object report enable register\n",
+			__func__);
 		return retval;
 	}
 
@@ -234,11 +235,11 @@ static int prox_set_hover_finger_en(void)
 static void prox_set_params(void)
 {
 	input_set_abs_params(prox->prox_dev, ABS_X, 0,
-			prox->rmi4_data->sensor_max_x, 0, 0);
+			     prox->rmi4_data->sensor_max_x, 0, 0);
 	input_set_abs_params(prox->prox_dev, ABS_Y, 0,
-			prox->rmi4_data->sensor_max_y, 0, 0);
+			     prox->rmi4_data->sensor_max_y, 0, 0);
 	input_set_abs_params(prox->prox_dev, ABS_DISTANCE, 0,
-			HOVER_Z_MAX, 0, 0);
+			     HOVER_Z_MAX, 0, 0);
 
 	return;
 }
@@ -253,42 +254,39 @@ static int prox_reg_init(void)
 	struct synaptics_rmi4_data *rmi4_data = prox->rmi4_data;
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			prox->query_base_addr + 5,
-			query_5.data,
-			sizeof(query_5.data));
+					 prox->query_base_addr + 5,
+					 query_5.data, sizeof(query_5.data));
 	if (retval < 0)
 		return retval;
 
 	ctrl_23_offset = query_5.ctrl0_is_present +
-			query_5.ctrl1_is_present +
-			query_5.ctrl2_is_present +
-			query_5.ctrl3_is_present +
-			query_5.ctrl4_is_present +
-			query_5.ctrl5_is_present +
-			query_5.ctrl6_is_present +
-			query_5.ctrl7_is_present +
-			query_5.ctrl8_is_present +
-			query_5.ctrl9_is_present +
-			query_5.ctrl10_is_present +
-			query_5.ctrl11_is_present +
-			query_5.ctrl12_is_present +
-			query_5.ctrl13_is_present +
-			query_5.ctrl14_is_present +
-			query_5.ctrl15_is_present +
-			query_5.ctrl16_is_present +
-			query_5.ctrl17_is_present +
-			query_5.ctrl18_is_present +
-			query_5.ctrl19_is_present +
-			query_5.ctrl20_is_present +
-			query_5.ctrl21_is_present +
-			query_5.ctrl22_is_present;
+	    query_5.ctrl1_is_present +
+	    query_5.ctrl2_is_present +
+	    query_5.ctrl3_is_present +
+	    query_5.ctrl4_is_present +
+	    query_5.ctrl5_is_present +
+	    query_5.ctrl6_is_present +
+	    query_5.ctrl7_is_present +
+	    query_5.ctrl8_is_present +
+	    query_5.ctrl9_is_present +
+	    query_5.ctrl10_is_present +
+	    query_5.ctrl11_is_present +
+	    query_5.ctrl12_is_present +
+	    query_5.ctrl13_is_present +
+	    query_5.ctrl14_is_present +
+	    query_5.ctrl15_is_present +
+	    query_5.ctrl16_is_present +
+	    query_5.ctrl17_is_present +
+	    query_5.ctrl18_is_present +
+	    query_5.ctrl19_is_present +
+	    query_5.ctrl20_is_present +
+	    query_5.ctrl21_is_present + query_5.ctrl22_is_present;
 
 	prox->hover_finger_en_addr = prox->control_base_addr + ctrl_23_offset;
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			prox->query_base_addr + 8,
-			query_8.data,
-			sizeof(query_8.data));
+					 prox->query_base_addr + 8,
+					 query_8.data, sizeof(query_8.data));
 	if (retval < 0)
 		return retval;
 
@@ -315,9 +313,9 @@ static int prox_scan_pdt(void)
 			addr |= (page << 8);
 
 			retval = synaptics_rmi4_reg_read(rmi4_data,
-					addr,
-					(unsigned char *)&fd,
-					sizeof(fd));
+							 addr,
+							 (unsigned char *)&fd,
+							 sizeof(fd));
 			if (retval < 0)
 				return retval;
 
@@ -325,8 +323,8 @@ static int prox_scan_pdt(void)
 
 			if (fd.fn_number) {
 				dev_dbg(rmi4_data->pdev->dev.parent,
-						"%s: Found F%02x\n",
-						__func__, fd.fn_number);
+					"%s: Found F%02x\n",
+					__func__, fd.fn_number);
 				switch (fd.fn_number) {
 				case SYNAPTICS_RMI4_F12:
 					goto f12_found;
@@ -341,11 +339,10 @@ static int prox_scan_pdt(void)
 	}
 
 	dev_err(rmi4_data->pdev->dev.parent,
-			"%s: Failed to find F12\n",
-			__func__);
+		"%s: Failed to find F12\n", __func__);
 	return -EINVAL;
 
-f12_found:
+ f12_found:
 	prox->query_base_addr = fd.query_base_addr | (page << 8);
 	prox->control_base_addr = fd.ctrl_base_addr | (page << 8);
 	prox->data_base_addr = fd.data_base_addr | (page << 8);
@@ -354,18 +351,15 @@ f12_found:
 	retval = prox_reg_init();
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to initialize proximity registers\n",
-				__func__);
+			"%s: Failed to initialize proximity registers\n",
+			__func__);
 		return retval;
 	}
 
 	prox->intr_mask = 0;
 	intr_src = fd.intr_src_count;
 	intr_off = intr_count % 8;
-	for (ii = intr_off;
-			ii < ((intr_src & MASK_3BIT) +
-			intr_off);
-			ii++) {
+	for (ii = intr_off; ii < ((intr_src & MASK_3BIT) + intr_off); ii++) {
 		prox->intr_mask |= 1 << ii;
 	}
 
@@ -374,13 +368,12 @@ f12_found:
 	addr = rmi4_data->f01_ctrl_base_addr + 1;
 
 	retval = synaptics_rmi4_reg_write(rmi4_data,
-			addr,
-			&(rmi4_data->intr_mask[0]),
-			sizeof(rmi4_data->intr_mask[0]));
+					  addr,
+					  &(rmi4_data->intr_mask[0]),
+					  sizeof(rmi4_data->intr_mask[0]));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to set interrupt enable bit\n",
-				__func__);
+			"%s: Failed to set interrupt enable bit\n", __func__);
 		return retval;
 	}
 
@@ -388,17 +381,19 @@ f12_found:
 }
 
 static ssize_t synaptics_rmi4_hover_finger_en_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
+						   struct device_attribute
+						   *attr, char *buf)
 {
 	if (!prox)
 		return -ENODEV;
 
-	return snprintf(buf, PAGE_SIZE, "%u\n",
-			prox->hover_finger_en);
+	return snprintf(buf, PAGE_SIZE, "%u\n", prox->hover_finger_en);
 }
 
 static ssize_t synaptics_rmi4_hover_finger_en_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+						    struct device_attribute
+						    *attr, const char *buf,
+						    size_t count)
 {
 	int retval;
 	unsigned int input;
@@ -420,8 +415,8 @@ static ssize_t synaptics_rmi4_hover_finger_en_store(struct device *dev,
 	retval = prox_set_hover_finger_en();
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to change hovering finger enable setting\n",
-				__func__);
+			"%s: Failed to change hovering finger enable setting\n",
+			__func__);
 		return retval;
 	}
 
@@ -443,10 +438,11 @@ int synaptics_rmi4_prox_hover_finger_en(bool enable)
 
 	return 0;
 }
+
 EXPORT_SYMBOL(synaptics_rmi4_prox_hover_finger_en);
 
 static void synaptics_rmi4_prox_attn(struct synaptics_rmi4_data *rmi4_data,
-		unsigned char intr_mask)
+				     unsigned char intr_mask)
 {
 	if (!prox)
 		return;
@@ -465,8 +461,7 @@ static int synaptics_rmi4_prox_init(struct synaptics_rmi4_data *rmi4_data)
 	prox = kzalloc(sizeof(*prox), GFP_KERNEL);
 	if (!prox) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to alloc mem for prox\n",
-				__func__);
+			"%s: Failed to alloc mem for prox\n", __func__);
 		retval = -ENOMEM;
 		goto exit;
 	}
@@ -474,8 +469,7 @@ static int synaptics_rmi4_prox_init(struct synaptics_rmi4_data *rmi4_data)
 	prox->finger_data = kzalloc(sizeof(*(prox->finger_data)), GFP_KERNEL);
 	if (!prox->finger_data) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to alloc mem for finger_data\n",
-				__func__);
+			"%s: Failed to alloc mem for finger_data\n", __func__);
 		retval = -ENOMEM;
 		goto exit_free_prox;
 	}
@@ -495,8 +489,7 @@ static int synaptics_rmi4_prox_init(struct synaptics_rmi4_data *rmi4_data)
 	prox->prox_dev = input_allocate_device();
 	if (prox->prox_dev == NULL) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to allocate proximity device\n",
-				__func__);
+			"%s: Failed to allocate proximity device\n", __func__);
 		retval = -ENOMEM;
 		goto exit_free_finger_data;
 	}
@@ -521,45 +514,44 @@ static int synaptics_rmi4_prox_init(struct synaptics_rmi4_data *rmi4_data)
 	retval = input_register_device(prox->prox_dev);
 	if (retval) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to register proximity device\n",
-				__func__);
+			"%s: Failed to register proximity device\n", __func__);
 		goto exit_free_input_device;
 	}
 
 	for (attr_count = 0; attr_count < ARRAY_SIZE(attrs); attr_count++) {
 		retval = sysfs_create_file(&rmi4_data->input_dev->dev.kobj,
-				&attrs[attr_count].attr);
+					   &attrs[attr_count].attr);
 		if (retval < 0) {
 			dev_err(rmi4_data->pdev->dev.parent,
-					"%s: Failed to create sysfs attributes\n",
-					__func__);
+				"%s: Failed to create sysfs attributes\n",
+				__func__);
 			goto exit_free_sysfs;
 		}
 	}
 
 	return 0;
 
-exit_free_sysfs:
+ exit_free_sysfs:
 	for (attr_count--; attr_count >= 0; attr_count--) {
 		sysfs_remove_file(&rmi4_data->input_dev->dev.kobj,
-				&attrs[attr_count].attr);
+				  &attrs[attr_count].attr);
 	}
 
 	input_unregister_device(prox->prox_dev);
 	prox->prox_dev = NULL;
 
-exit_free_input_device:
+ exit_free_input_device:
 	if (prox->prox_dev)
 		input_free_device(prox->prox_dev);
 
-exit_free_finger_data:
+ exit_free_finger_data:
 	kfree(prox->finger_data);
 
-exit_free_prox:
+ exit_free_prox:
 	kfree(prox);
 	prox = NULL;
 
-exit:
+ exit:
 	return retval;
 }
 
@@ -572,7 +564,7 @@ static void synaptics_rmi4_prox_remove(struct synaptics_rmi4_data *rmi4_data)
 
 	for (attr_count = 0; attr_count < ARRAY_SIZE(attrs); attr_count++) {
 		sysfs_remove_file(&rmi4_data->input_dev->dev.kobj,
-				&attrs[attr_count].attr);
+				  &attrs[attr_count].attr);
 	}
 
 	input_unregister_device(prox->prox_dev);
@@ -580,7 +572,7 @@ static void synaptics_rmi4_prox_remove(struct synaptics_rmi4_data *rmi4_data)
 	kfree(prox);
 	prox = NULL;
 
-exit:
+ exit:
 	complete(&prox_remove_complete);
 
 	return;

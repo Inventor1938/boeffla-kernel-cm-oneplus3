@@ -137,13 +137,12 @@ static void apen_report(void)
 	struct synaptics_rmi4_data *rmi4_data = apen->rmi4_data;
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			apen->apen_data_addr,
-			apen->apen_data->data,
-			sizeof(apen->apen_data->data));
+					 apen->apen_data_addr,
+					 apen->apen_data->data,
+					 sizeof(apen->apen_data->data));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to read active pen data\n",
-				__func__);
+			"%s: Failed to read active pen data\n", __func__);
 		return;
 	}
 
@@ -152,8 +151,7 @@ static void apen_report(void)
 			apen_lift();
 
 		dev_dbg(rmi4_data->pdev->dev.parent,
-				"%s: No active pen data\n",
-				__func__);
+			"%s: No active pen data\n", __func__);
 
 		return;
 	}
@@ -166,8 +164,8 @@ static void apen_report(void)
 			apen_lift();
 
 		dev_dbg(rmi4_data->pdev->dev.parent,
-				"%s: Active pen in range but no valid x & y\n",
-				__func__);
+			"%s: Active pen in range but no valid x & y\n",
+			__func__);
 
 		return;
 	}
@@ -182,29 +180,28 @@ static void apen_report(void)
 
 	if (apen->max_pressure == ACTIVE_PEN_MAX_PRESSURE_16BIT) {
 		pressure = (apen->apen_data->pressure_msb << 8) |
-				apen->apen_data->pressure_lsb;
+		    apen->apen_data->pressure_lsb;
 		apen->battery_state = apen->apen_data->battery_state;
 		apen->pen_id = (apen->apen_data->pen_id_24_31 << 24) |
-				(apen->apen_data->pen_id_16_23 << 16) |
-				(apen->apen_data->pen_id_8_15 << 8) |
-				apen->apen_data->pen_id_0_7;
+		    (apen->apen_data->pen_id_16_23 << 16) |
+		    (apen->apen_data->pen_id_8_15 << 8) |
+		    apen->apen_data->pen_id_0_7;
 	} else {
 		apen_data_8b = (struct apen_data_8b_pressure *)apen->apen_data;
 		pressure = apen_data_8b->pressure_msb;
 		apen->battery_state = apen_data_8b->battery_state;
 		apen->pen_id = (apen_data_8b->pen_id_24_31 << 24) |
-				(apen_data_8b->pen_id_16_23 << 16) |
-				(apen_data_8b->pen_id_8_15 << 8) |
-				apen_data_8b->pen_id_0_7;
+		    (apen_data_8b->pen_id_16_23 << 16) |
+		    (apen_data_8b->pen_id_8_15 << 8) | apen_data_8b->pen_id_0_7;
 	}
 
 	input_report_key(apen->apen_dev, BTN_TOUCH, pressure > 0 ? 1 : 0);
 	input_report_key(apen->apen_dev,
-			apen->apen_data->status_invert > 0 ?
-			BTN_TOOL_RUBBER : BTN_TOOL_PEN, 1);
+			 apen->apen_data->status_invert > 0 ?
+			 BTN_TOOL_RUBBER : BTN_TOOL_PEN, 1);
 	input_report_key(apen->apen_dev,
-			BTN_STYLUS, apen->apen_data->status_barrel > 0 ?
-			1 : 0);
+			 BTN_STYLUS, apen->apen_data->status_barrel > 0 ?
+			 1 : 0);
 	input_report_abs(apen->apen_dev, ABS_X, x);
 	input_report_abs(apen->apen_dev, ABS_Y, y);
 	input_report_abs(apen->apen_dev, ABS_PRESSURE, pressure);
@@ -212,18 +209,17 @@ static void apen_report(void)
 	input_sync(apen->apen_dev);
 
 	dev_dbg(rmi4_data->pdev->dev.parent,
-			"%s: Active pen: "
-			"status = %d, "
-			"invert = %d, "
-			"barrel = %d, "
-			"x = %d, "
-			"y = %d, "
-			"pressure = %d\n",
-			__func__,
-			apen->apen_data->status_pen,
-			apen->apen_data->status_invert,
-			apen->apen_data->status_barrel,
-			x, y, pressure);
+		"%s: Active pen: "
+		"status = %d, "
+		"invert = %d, "
+		"barrel = %d, "
+		"x = %d, "
+		"y = %d, "
+		"pressure = %d\n",
+		__func__,
+		apen->apen_data->status_pen,
+		apen->apen_data->status_invert,
+		apen->apen_data->status_barrel, x, y, pressure);
 
 	apen->apen_present = true;
 
@@ -233,11 +229,11 @@ static void apen_report(void)
 static void apen_set_params(void)
 {
 	input_set_abs_params(apen->apen_dev, ABS_X, 0,
-			apen->rmi4_data->sensor_max_x, 0, 0);
+			     apen->rmi4_data->sensor_max_x, 0, 0);
 	input_set_abs_params(apen->apen_dev, ABS_Y, 0,
-			apen->rmi4_data->sensor_max_y, 0, 0);
+			     apen->rmi4_data->sensor_max_y, 0, 0);
 	input_set_abs_params(apen->apen_dev, ABS_PRESSURE, 0,
-			apen->max_pressure, 0, 0);
+			     apen->max_pressure, 0, 0);
 
 	return;
 }
@@ -258,9 +254,8 @@ static int apen_pressure(struct synaptics_rmi4_f12_query_8 *query_8)
 	query_9 = kmalloc(size_of_query_9, GFP_KERNEL);
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			apen->query_base_addr + 9,
-			query_9,
-			size_of_query_9);
+					 apen->query_base_addr + 9,
+					 query_9, size_of_query_9);
 	if (retval < 0)
 		goto exit;
 
@@ -268,21 +263,21 @@ static int apen_pressure(struct synaptics_rmi4_f12_query_8 *query_8)
 
 	for (ii = 0; ii < 6; ii++) {
 		if (!(data_reg_presence & (1 << ii)))
-			continue; /* The data register is not present */
-		data_desc++; /* Jump over the size entry */
+			continue;	/* The data register is not present */
+		data_desc++;	/* Jump over the size entry */
 		while (*data_desc & (1 << 7))
 			data_desc++;
-		data_desc++; /* Go to the next descriptor */
+		data_desc++;	/* Go to the next descriptor */
 	}
 
-	data_desc++; /* Jump over the size entry */
+	data_desc++;		/* Jump over the size entry */
 	/* Check for the presence of subpackets 1 and 2 */
 	if ((*data_desc & (3 << 1)) == (3 << 1))
 		apen->max_pressure = ACTIVE_PEN_MAX_PRESSURE_16BIT;
 	else
 		apen->max_pressure = ACTIVE_PEN_MAX_PRESSURE_8BIT;
 
-exit:
+ exit:
 	kfree(query_9);
 
 	return retval;
@@ -297,34 +292,31 @@ static int apen_reg_init(void)
 	struct synaptics_rmi4_data *rmi4_data = apen->rmi4_data;
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			apen->query_base_addr + 7,
-			&size_of_query8,
-			sizeof(size_of_query8));
+					 apen->query_base_addr + 7,
+					 &size_of_query8,
+					 sizeof(size_of_query8));
 	if (retval < 0)
 		return retval;
 
 	retval = synaptics_rmi4_reg_read(rmi4_data,
-			apen->query_base_addr + 8,
-			query_8.data,
-			size_of_query8);
+					 apen->query_base_addr + 8,
+					 query_8.data, size_of_query8);
 	if (retval < 0)
 		return retval;
 
 	if ((size_of_query8 >= 2) && (query_8.data6_is_present)) {
 		data_offset = query_8.data0_is_present +
-				query_8.data1_is_present +
-				query_8.data2_is_present +
-				query_8.data3_is_present +
-				query_8.data4_is_present +
-				query_8.data5_is_present;
+		    query_8.data1_is_present +
+		    query_8.data2_is_present +
+		    query_8.data3_is_present +
+		    query_8.data4_is_present + query_8.data5_is_present;
 		apen->apen_data_addr = apen->data_base_addr + data_offset;
 		retval = apen_pressure(&query_8);
 		if (retval < 0)
 			return retval;
 	} else {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Active pen support unavailable\n",
-				__func__);
+			"%s: Active pen support unavailable\n", __func__);
 		retval = -ENODEV;
 	}
 
@@ -348,9 +340,9 @@ static int apen_scan_pdt(void)
 			addr |= (page << 8);
 
 			retval = synaptics_rmi4_reg_read(rmi4_data,
-					addr,
-					(unsigned char *)&fd,
-					sizeof(fd));
+							 addr,
+							 (unsigned char *)&fd,
+							 sizeof(fd));
 			if (retval < 0)
 				return retval;
 
@@ -358,8 +350,8 @@ static int apen_scan_pdt(void)
 
 			if (fd.fn_number) {
 				dev_dbg(rmi4_data->pdev->dev.parent,
-						"%s: Found F%02x\n",
-						__func__, fd.fn_number);
+					"%s: Found F%02x\n",
+					__func__, fd.fn_number);
 				switch (fd.fn_number) {
 				case SYNAPTICS_RMI4_F12:
 					goto f12_found;
@@ -374,11 +366,10 @@ static int apen_scan_pdt(void)
 	}
 
 	dev_err(rmi4_data->pdev->dev.parent,
-			"%s: Failed to find F12\n",
-			__func__);
+		"%s: Failed to find F12\n", __func__);
 	return -EINVAL;
 
-f12_found:
+ f12_found:
 	apen->query_base_addr = fd.query_base_addr | (page << 8);
 	apen->control_base_addr = fd.ctrl_base_addr | (page << 8);
 	apen->data_base_addr = fd.data_base_addr | (page << 8);
@@ -387,17 +378,15 @@ f12_found:
 	retval = apen_reg_init();
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to initialize active pen registers\n",
-				__func__);
+			"%s: Failed to initialize active pen registers\n",
+			__func__);
 		return retval;
 	}
 
 	apen->intr_mask = 0;
 	intr_src = fd.intr_src_count;
 	intr_off = intr_count % 8;
-	for (ii = intr_off;
-			ii < (intr_src + intr_off);
-			ii++) {
+	for (ii = intr_off; ii < (intr_src + intr_off); ii++) {
 		apen->intr_mask |= 1 << ii;
 	}
 
@@ -406,13 +395,12 @@ f12_found:
 	addr = rmi4_data->f01_ctrl_base_addr + 1;
 
 	retval = synaptics_rmi4_reg_write(rmi4_data,
-			addr,
-			&(rmi4_data->intr_mask[0]),
-			sizeof(rmi4_data->intr_mask[0]));
+					  addr,
+					  &(rmi4_data->intr_mask[0]),
+					  sizeof(rmi4_data->intr_mask[0]));
 	if (retval < 0) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to set interrupt enable bit\n",
-				__func__);
+			"%s: Failed to set interrupt enable bit\n", __func__);
 		return retval;
 	}
 
@@ -420,7 +408,7 @@ f12_found:
 }
 
 static void synaptics_rmi4_apen_attn(struct synaptics_rmi4_data *rmi4_data,
-		unsigned char intr_mask)
+				     unsigned char intr_mask)
 {
 	if (!apen)
 		return;
@@ -437,16 +425,14 @@ static int synaptics_rmi4_apen_init(struct synaptics_rmi4_data *rmi4_data)
 
 	if (apen) {
 		dev_dbg(rmi4_data->pdev->dev.parent,
-				"%s: Handle already exists\n",
-				__func__);
+			"%s: Handle already exists\n", __func__);
 		return 0;
 	}
 
 	apen = kzalloc(sizeof(*apen), GFP_KERNEL);
 	if (!apen) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to alloc mem for apen\n",
-				__func__);
+			"%s: Failed to alloc mem for apen\n", __func__);
 		retval = -ENOMEM;
 		goto exit;
 	}
@@ -454,8 +440,7 @@ static int synaptics_rmi4_apen_init(struct synaptics_rmi4_data *rmi4_data)
 	apen->apen_data = kzalloc(sizeof(*(apen->apen_data)), GFP_KERNEL);
 	if (!apen->apen_data) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to alloc mem for apen_data\n",
-				__func__);
+			"%s: Failed to alloc mem for apen_data\n", __func__);
 		retval = -ENOMEM;
 		goto exit_free_apen;
 	}
@@ -469,8 +454,7 @@ static int synaptics_rmi4_apen_init(struct synaptics_rmi4_data *rmi4_data)
 	apen->apen_dev = input_allocate_device();
 	if (apen->apen_dev == NULL) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to allocate active pen device\n",
-				__func__);
+			"%s: Failed to allocate active pen device\n", __func__);
 		retval = -ENOMEM;
 		goto exit_free_apen_data;
 	}
@@ -497,24 +481,23 @@ static int synaptics_rmi4_apen_init(struct synaptics_rmi4_data *rmi4_data)
 	retval = input_register_device(apen->apen_dev);
 	if (retval) {
 		dev_err(rmi4_data->pdev->dev.parent,
-				"%s: Failed to register active pen device\n",
-				__func__);
+			"%s: Failed to register active pen device\n", __func__);
 		goto exit_free_input_device;
 	}
 
 	return 0;
 
-exit_free_input_device:
+ exit_free_input_device:
 	input_free_device(apen->apen_dev);
 
-exit_free_apen_data:
+ exit_free_apen_data:
 	kfree(apen->apen_data);
 
-exit_free_apen:
+ exit_free_apen:
 	kfree(apen);
 	apen = NULL;
 
-exit:
+ exit:
 	return retval;
 }
 
@@ -528,7 +511,7 @@ static void synaptics_rmi4_apen_remove(struct synaptics_rmi4_data *rmi4_data)
 	kfree(apen);
 	apen = NULL;
 
-exit:
+ exit:
 	complete(&apen_remove_complete);
 
 	return;

@@ -322,39 +322,41 @@ struct synaptics_rmi4_data {
 	bool f12_wakeup_gesture;
 	bool enable_wakeup_gesture;
 	bool wedge_sensor;
-	int (*reset_device)(struct synaptics_rmi4_data *rmi4_data,
-			bool rebuild);
-	int (*irq_enable)(struct synaptics_rmi4_data *rmi4_data, bool enable,
-			bool attn_only);
+	int (*reset_device) (struct synaptics_rmi4_data * rmi4_data,
+			     bool rebuild);
+	int (*irq_enable) (struct synaptics_rmi4_data * rmi4_data, bool enable,
+			   bool attn_only);
 };
 
 struct synaptics_dsx_bus_access {
 	unsigned char type;
-	int (*read)(struct synaptics_rmi4_data *rmi4_data, unsigned short addr,
-		unsigned char *data, unsigned short length);
-	int (*write)(struct synaptics_rmi4_data *rmi4_data, unsigned short addr,
-		unsigned char *data, unsigned short length);
+	int (*read) (struct synaptics_rmi4_data * rmi4_data,
+		     unsigned short addr, unsigned char *data,
+		     unsigned short length);
+	int (*write) (struct synaptics_rmi4_data * rmi4_data,
+		      unsigned short addr, unsigned char *data,
+		      unsigned short length);
 };
 
 struct synaptics_dsx_hw_interface {
 	struct synaptics_dsx_board_data *board_data;
 	const struct synaptics_dsx_bus_access *bus_access;
-	int (*bl_hw_init)(struct synaptics_rmi4_data *rmi4_data);
-	int (*ui_hw_init)(struct synaptics_rmi4_data *rmi4_data);
+	int (*bl_hw_init) (struct synaptics_rmi4_data * rmi4_data);
+	int (*ui_hw_init) (struct synaptics_rmi4_data * rmi4_data);
 };
 
 struct synaptics_rmi4_exp_fn {
 	enum exp_fn fn_type;
-	int (*init)(struct synaptics_rmi4_data *rmi4_data);
-	void (*remove)(struct synaptics_rmi4_data *rmi4_data);
-	void (*reset)(struct synaptics_rmi4_data *rmi4_data);
-	void (*reinit)(struct synaptics_rmi4_data *rmi4_data);
-	void (*early_suspend)(struct synaptics_rmi4_data *rmi4_data);
-	void (*suspend)(struct synaptics_rmi4_data *rmi4_data);
-	void (*resume)(struct synaptics_rmi4_data *rmi4_data);
-	void (*late_resume)(struct synaptics_rmi4_data *rmi4_data);
-	void (*attn)(struct synaptics_rmi4_data *rmi4_data,
-			unsigned char intr_mask);
+	int (*init) (struct synaptics_rmi4_data * rmi4_data);
+	void (*remove) (struct synaptics_rmi4_data * rmi4_data);
+	void (*reset) (struct synaptics_rmi4_data * rmi4_data);
+	void (*reinit) (struct synaptics_rmi4_data * rmi4_data);
+	void (*early_suspend) (struct synaptics_rmi4_data * rmi4_data);
+	void (*suspend) (struct synaptics_rmi4_data * rmi4_data);
+	void (*resume) (struct synaptics_rmi4_data * rmi4_data);
+	void (*late_resume) (struct synaptics_rmi4_data * rmi4_data);
+	void (*attn) (struct synaptics_rmi4_data * rmi4_data,
+		      unsigned char intr_mask);
 };
 
 int synaptics_rmi4_bus_init(void);
@@ -362,47 +364,47 @@ int synaptics_rmi4_bus_init(void);
 void synaptics_rmi4_bus_exit(void);
 
 void synaptics_rmi4_new_function(struct synaptics_rmi4_exp_fn *exp_fn_module,
-		bool insert);
+				 bool insert);
 
 int synaptics_fw_updater(const unsigned char *fw_data);
 
-static inline int synaptics_rmi4_reg_read(
-		struct synaptics_rmi4_data *rmi4_data,
-		unsigned short addr,
-		unsigned char *data,
-		unsigned short len)
+static inline int synaptics_rmi4_reg_read(struct synaptics_rmi4_data *rmi4_data,
+					  unsigned short addr,
+					  unsigned char *data,
+					  unsigned short len)
 {
 	return rmi4_data->hw_if->bus_access->read(rmi4_data, addr, data, len);
 }
 
-static inline int synaptics_rmi4_reg_write(
-		struct synaptics_rmi4_data *rmi4_data,
-		unsigned short addr,
-		unsigned char *data,
-		unsigned short len)
+static inline int synaptics_rmi4_reg_write(struct synaptics_rmi4_data
+					   *rmi4_data, unsigned short addr,
+					   unsigned char *data,
+					   unsigned short len)
 {
 	return rmi4_data->hw_if->bus_access->write(rmi4_data, addr, data, len);
 }
 
 static inline ssize_t synaptics_rmi4_show_error(struct device *dev,
-		struct device_attribute *attr, char *buf)
+						struct device_attribute *attr,
+						char *buf)
 {
 	dev_warn(dev, "%s Attempted to read from write-only attribute %s\n",
-			__func__, attr->attr.name);
+		 __func__, attr->attr.name);
 	return -EPERM;
 }
 
 static inline ssize_t synaptics_rmi4_store_error(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
+						 struct device_attribute *attr,
+						 const char *buf, size_t count)
 {
 	dev_warn(dev, "%s Attempted to write to read-only attribute %s\n",
-			__func__, attr->attr.name);
+		 __func__, attr->attr.name);
 	return -EPERM;
 }
 
 static inline int secure_memcpy(unsigned char *dest, unsigned int dest_size,
-		const unsigned char *src, unsigned int src_size,
-		unsigned int count)
+				const unsigned char *src, unsigned int src_size,
+				unsigned int count)
 {
 	if (dest == NULL || src == NULL)
 		return -EINVAL;
