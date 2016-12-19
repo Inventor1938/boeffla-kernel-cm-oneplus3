@@ -70,6 +70,7 @@ enum oem_boot_mode {
 
 /*------------------------------------------------Global Define--------------------------------------------*/
 #define TP_TEST_ENABLE 1
+#define TPD_NAME "synaptics"
 #define TPD_DEVICE "HWK,synaptics,s1302"
 #define LOG_TAG		"touchkey,s1302"
 
@@ -313,8 +314,11 @@ struct synaptics_ts_data {
 	char fw_name[TP_FW_NAME_MAX_LEN];
 	char fw_id[12];
 	char manu_name[12];
-};
 
+	struct work_struct pm_work;
+
+	bool stop_keypad;
+};
 
 static int tc_hw_pwron(struct synaptics_ts_data *ts)
 {
@@ -695,85 +699,14 @@ static int synaptics_rmi4_i2c_write_word(struct i2c_client *client,
 
 static char log_count = 0;
 static bool is_report_key = true;
-#define REP_KEY_BACK (key_reverse?(KEY_BACK):(KEY_APPSELECT))
-#define REP_KEY_MENU (key_reverse?(KEY_APPSELECT):(KEY_BACK))
+#define REP_KEY_BACK (key_reverse?(KEY_APPSELECT):(KEY_BACK))
+#define REP_KEY_MENU (key_reverse?(KEY_BACK):(KEY_APPSELECT))
 
 #ifdef SUPPORT_VIRTUAL_KEY	//WayneChang, 2015/12/29, add flag to enable virtual key
 bool virtual_key_enable;
 EXPORT_SYMBOL(virtual_key_enable);
 struct completion key_cm;
-bool key_appselect_pressed = false;
-bool key_back_pressed = false;
-bool check_key_down= false;
-EXPORT_SYMBOL(key_appselect_pressed);
-EXPORT_SYMBOL(key_back_pressed);
 EXPORT_SYMBOL(key_cm);
-EXPORT_SYMBOL(check_key_down);
-
-extern void int_touch(void);
-
-static void int_virtual_key(struct synaptics_ts_data *ts )
-{
-
-	int ret;
-	int button_key;
-	long time =0 ;
-	bool key_up_report = false;
-
-	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x02 );
-	if (ret < 0) {
-		TPD_ERR("%s: Failed to change page 2!!\n",
-				__func__);
-		return;
-	}
-
-	button_key = synaptics_rmi4_i2c_read_byte(ts->client,0x00);
-	if (6 == (++log_count % 12))
-		printk("%s	button_key:%d   pre_btn_state:%d\n",__func__,button_key,ts->pre_btn_state);
-	if((button_key & 0x01) && !(ts->pre_btn_state & 0x01))//back
-	{
-		key_appselect_pressed = true;
-	} else if(!(button_key & 0x01) && (ts->pre_btn_state & 0x01)) {
-		key_appselect_pressed = false;
-		key_up_report = true;
-	}
-
-	if((button_key & 0x02) && !(ts->pre_btn_state & 0x02))//menu
-	{
-		key_back_pressed = true;
-	} else if(!(button_key & 0x02) && (ts->pre_btn_state & 0x02)) {
-		key_back_pressed = false;
-		key_up_report = true;
-	}
-
-	if((button_key & 0x04) && !(ts->pre_btn_state & 0x04))//home
-	{
-		input_report_key(ts->input_dev, KEY_HOMEPAGE, 1);//KEY_HOMEPAGE
-		input_sync(ts->input_dev);
-	}else if(!(button_key & 0x04) && (ts->pre_btn_state & 0x04)){
-		input_report_key(ts->input_dev, KEY_HOMEPAGE, 0);
-		input_sync(ts->input_dev);
-	}
-	if(key_up_report){
-		reinit_completion(&key_cm);
-		time = wait_for_completion_timeout(&key_cm,msecs_to_jiffies(touchkey_wait_time));
-		if (!time){
-			check_key_down = false;
-			int_touch();
-		}
-	}else{
-		check_key_down = true;
-		int_touch();
-	}
-	ts->pre_btn_state = button_key & 0x07;
-	ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, 0x00);
-	if (ret < 0) {
-		TPD_ERR("%s: Failed to change page 2!!\n",
-				__func__);
-		return;
-	}
-	return;
-}
 #endif
 static void int_key(struct synaptics_ts_data *ts)
 {
@@ -953,10 +886,8 @@ static void synaptics_ts_report(struct synaptics_ts_data *ts)
 			int_key_cover(ts);
 		else
 			int_key(ts);
-#elif (defined SUPPORT_VIRTUAL_KEY)
-		if (virtual_key_enable)
-			int_virtual_key(ts);
-		else
+#else
+		if (!virtual_key_enable && !ts->stop_keypad)
 			int_key(ts);
 #endif
 	}
@@ -995,7 +926,7 @@ static int synaptics_input_init(struct synaptics_ts_data *ts)
 		    ("synaptics_ts_probe: Failed to allocate input device\n");
 		return ret;
 	}
-	ts->input_dev->name = TPD_DEVICE;;
+	ts->input_dev->name = TPD_NAME;
 	ts->input_dev->dev.parent = &ts->client->dev;
 	set_bit(EV_SYN, ts->input_dev->evbit);
 	set_bit(EV_KEY, ts->input_dev->evbit);
@@ -1197,38 +1128,40 @@ static ssize_t synaptics_s1302_radd_write(struct file *file,
 	int buf[128];
 	int ret, i;
 	struct synaptics_ts_data *ts = tc_g;
-    int temp_block,wbyte;
-    char reg[30];
+	int temp_block, wbyte;
+	char reg[30];
 
-    ret = sscanf(buffer,"%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x",\
-    &buf[0],&buf[1],&buf[2],&buf[3],&buf[4],&buf[5],&buf[6],&buf[7],&buf[8],&buf[9],\
-    &buf[10],&buf[11],&buf[12],&buf[13],&buf[14],&buf[15],&buf[16],&buf[17]);
-    for (i = 0;i < ret;i++)
-    {
-        printk("buf[i]=0x%x,",buf[i]);
-    }
-    printk("\n");
-    page= buf[0];
-    address = buf[1];
-    temp_block = buf[2];
-    wbyte = buf[3];
-    if (0xFF == temp_block)//the  mark is to write register else read register
-    {
-        for (i=0;i < wbyte;i++)
-        {
-            reg[i] = (char)buf[4+i];
-        }
-        ret = synaptics_rmi4_i2c_write_byte(ts->client,0xff,page);
-        ret = synaptics_rmi4_i2c_write_block(ts->client,(char)address,wbyte,reg);
-        printk("%s write page=0x%x,address=0x%x\n",__func__,page,address);
-        for (i=0;i < wbyte;i++)
-        {
-            printk("reg=0x%x\n",reg[i]);
-        }
-    }
-    else
-        block = temp_block;
-    return count;
+	ret =
+	    sscanf(buffer,
+		   "%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x",
+		   &buf[0], &buf[1], &buf[2], &buf[3], &buf[4], &buf[5],
+		   &buf[6], &buf[7], &buf[8], &buf[9], &buf[10], &buf[11],
+		   &buf[12], &buf[13], &buf[14], &buf[15], &buf[16], &buf[17]);
+	for (i = 0; i < ret; i++) {
+		printk("buf[i]=0x%x,", buf[i]);
+	}
+	printk("\n");
+	page = buf[0];
+	address = buf[1];
+	temp_block = buf[2];
+	wbyte = buf[3];
+	if (0xFF == temp_block)	//the  mark is to write register else read register
+	{
+		for (i = 0; i < wbyte; i++) {
+			reg[i] = (char)buf[4 + i];
+		}
+		ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, page);
+		ret =
+		    synaptics_rmi4_i2c_write_block(ts->client, (char)address,
+						   wbyte, reg);
+		printk("%s write page=0x%x,address=0x%x\n", __func__, page,
+		       address);
+		for (i = 0; i < wbyte; i++) {
+			printk("reg=0x%x\n", reg[i]);
+		}
+	} else
+		block = temp_block;
+	return count;
 }
 
 static int synaptics_s1302_radd_open(struct inode *inode, struct file *file)
@@ -2356,8 +2289,8 @@ static int synaptics_ts_probe(struct i2c_client *client,
 	sprintf(ts->fw_id, "0x%x", CURRENT_FIRMWARE_ID);
 
 	memset(ts->fw_name, 0, TP_FW_NAME_MAX_LEN);
-	strcpy(ts->fw_name,"tp/fw_synaptics_touchkey.img");
-	TPD_DEBUG("synatpitcs_fw: fw_name = %s \n",ts->fw_name);
+	strcpy(ts->fw_name, "tp/fw_synaptics_touchkey.img");
+	TPD_DEBUG("synatpitcs_fw: fw_name = %s \n", ts->fw_name);
 
 	push_component_info(TOUCH_KEY, ts->fw_id, ts->manu_name);
 
@@ -2429,6 +2362,11 @@ static int synaptics_ts_probe(struct i2c_client *client,
 		register_remote_device_s1302(premote_data);
 	}
 #endif
+
+	ret = input_register_handler(&synaptics_input_handler);
+	if (ret)
+		TPD_ERR("%s: Failed to register input handler\n", __func__);
+
 	TPDTM_DMESG("synaptics_ts_probe s1302: normal end\n");
 	return 0;
 
@@ -2546,29 +2484,27 @@ static int fb_notifier_callback(struct notifier_block *self,
 	struct synaptics_ts_data *ts =
 	    container_of(self, struct synaptics_ts_data, fb_notif);
 	struct fb_event *evdata = data;
-	int *blank;
+	int *blank = evdata->data;
 
-	struct synaptics_ts_data *ts = container_of(self, struct synaptics_ts_data, fb_notif);
+	if (event != FB_EVENT_BLANK)
+		return NOTIFY_OK;
 
-	if(FB_EVENT_BLANK != event)
-	return 0;
-	if((evdata) && (evdata->data) && (ts) && (ts->client)&&(event == FB_EVENT_BLANK)) {
-		blank = evdata->data;
-		if( *blank == FB_BLANK_UNBLANK || *blank == FB_BLANK_NORMAL) {
-			TPD_DEBUG("%s going TP resume\n", __func__);
-			if(ts->suspended == 1){
-				ts->suspended = 0;
-				synaptics_ts_resume(&ts->client->dev);
-			}
-		} else if( *blank == FB_BLANK_POWERDOWN) {
-			TPD_DEBUG("%s : going TP suspend\n", __func__);
-			if(ts->suspended == 0) {
-				ts->suspended = 1;
-				synaptics_ts_suspend(&ts->client->dev);
-			}
+	switch (*blank) {
+	case FB_BLANK_UNBLANK:
+	case FB_BLANK_NORMAL:
+		if (ts->suspended) {
+			ts->suspended = 0;
+			queue_work(system_highpri_wq, &ts->pm_work);
+		}
+		break;
+	case FB_BLANK_POWERDOWN:
+		if (!ts->suspended) {
+			ts->suspended = 1;
+			queue_work(system_highpri_wq, &ts->pm_work);
 		}
 	}
-	return 0;
+
+	return NOTIFY_OK;
 }
 #endif
 
