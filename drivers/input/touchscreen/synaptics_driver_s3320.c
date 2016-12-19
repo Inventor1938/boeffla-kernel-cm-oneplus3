@@ -45,8 +45,6 @@
 #include <linux/timer.h>
 #include <linux/time.h>
 
-#include <linux/boeffla_powerkey_helper.h>
-
 #ifdef CONFIG_FB
 #include <linux/fb.h>
 #include <linux/notifier.h>
@@ -74,6 +72,7 @@
 #define PAGESIZE 512
 #define TPD_USE_EINT
 
+#define TPD_NAME "synaptics"
 #define TPD_DEVICE "synaptics,s3320"
 
 //#define SUPPORT_SLEEP_POWEROFF
@@ -180,7 +179,7 @@ static int gesture_switch = 0;
 static int baseline_ret = 0;
 static int TP_FW;
 static int tp_dev = 6;
-static unsigned int tp_debug = 1;
+static unsigned int tp_debug = 0;
 static int button_map[3];
 static int tx_rx_num[2];
 static int16_t Rxdata[30][30];
@@ -395,7 +394,6 @@ struct synaptics_optimize_data {
 	const struct i2c_device_id *dev_id;
 };
 static struct synaptics_optimize_data optimize_data;
-
 static void synaptics_ts_probe_func(struct work_struct *w)
 {
 	struct i2c_client *client_optimize = optimize_data.client;
@@ -497,10 +495,11 @@ struct synaptics_ts_data {
 	char fw_name[TP_FW_NAME_MAX_LEN];
 	char test_limit_name[TP_FW_NAME_MAX_LEN];
 	char fw_id[12];
-	char manu_name[30];
+	char manu_name[10];
 #ifdef SUPPORT_VIRTUAL_KEY
 	struct kobject *properties_kobj;
 #endif
+	struct work_struct pm_work;
 };
 
 static struct device_attribute attrs_oem[] = {
@@ -1345,16 +1344,11 @@ static void gesture_judge(struct synaptics_ts_data *ts)
 }
 #endif
 /***************end****************/
-static char prlog_count = 0;
 #ifdef REPORT_2D_PRESSURE
 static unsigned char pres_value = 1;
 #endif
 #ifdef SUPPORT_VIRTUAL_KEY	//WayneChang, 2015/12/02, add for key to abs, simulate key in abs through virtual key system
 extern struct completion key_cm;
-extern bool key_back_pressed;
-extern bool key_appselect_pressed;
-extern bool key_home_pressed;
-extern bool virtual_key_enable;
 #endif
 void int_touch(void)
 {
@@ -1441,11 +1435,7 @@ void int_touch(void)
 #ifndef TYPE_B_PROTOCOL
 			input_mt_sync(ts->input_dev);
 #endif
-#ifdef SUPPORT_VIRTUAL_KEY //WayneChang, 2015/12/02, add for key to abs, simulate key in abs through virtual key system
-			if(virtual_key_enable){
-				complete(&key_cm);
-			}
-#endif
+			complete(&key_cm);
 			finger_num++;
 			finger_info |= 1;
 			//TPD_DEBUG("%s: Finger %d: status = 0x%02x "
@@ -1468,8 +1458,7 @@ void int_touch(void)
 
 	last_status = current_status & 0x02;
 
-	if (finger_num == 0/* && last_status && (check_key <= 1)*/)
-	{
+	if (finger_num == 0 /* && last_status && (check_key <= 1) */ ) {
 		input_report_key(ts->input_dev, BTN_TOOL_FINGER, 0);
 #ifndef TYPE_B_PROTOCOL
 		input_mt_sync(ts->input_dev);
@@ -1933,38 +1922,40 @@ static ssize_t synap_write_address(struct file *file,
 	int buf[128];
 	int ret, i;
 	struct synaptics_ts_data *ts = ts_g;
-    int temp_block,wbyte;
-    char reg[30];
+	int temp_block, wbyte;
+	char reg[30];
 
-    ret = sscanf(buffer,"%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x",\
-    &buf[0],&buf[1],&buf[2],&buf[3],&buf[4],&buf[5],&buf[6],&buf[7],&buf[8],&buf[9],\
-    &buf[10],&buf[11],&buf[12],&buf[13],&buf[14],&buf[15],&buf[16],&buf[17]);
-    for (i = 0;i < ret;i++)
-    {
-        TPD_DEBUG("buf[i]=0x%x,",buf[i]);
-    }
-    TPD_DEBUG("\n");
-    page= buf[0];
-    address = buf[1];
-    temp_block = buf[2];
-    wbyte = buf[3];
-    if (0xFF == temp_block)//the  mark is to write register else read register
-    {
-        for (i=0;i < wbyte;i++)
-        {
-            reg[i] = (char)buf[4+i];
-        }
-        ret = synaptics_rmi4_i2c_write_byte(ts->client,0xff,page);
-        ret = synaptics_rmi4_i2c_write_block(ts->client,(char)address,wbyte,reg);
-        TPD_DEBUG("%s write page=0x%x,address=0x%x\n",__func__,page,address);
-        for (i=0;i < wbyte;i++)
-        {
-            TPD_DEBUG("reg=0x%x\n",reg[i]);
-        }
-    }
-    else
-        block = temp_block;
-    return count;
+	ret =
+	    sscanf(buffer,
+		   "%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x",
+		   &buf[0], &buf[1], &buf[2], &buf[3], &buf[4], &buf[5],
+		   &buf[6], &buf[7], &buf[8], &buf[9], &buf[10], &buf[11],
+		   &buf[12], &buf[13], &buf[14], &buf[15], &buf[16], &buf[17]);
+	for (i = 0; i < ret; i++) {
+		TPD_DEBUG("buf[i]=0x%x,", buf[i]);
+	}
+	TPD_DEBUG("\n");
+	page = buf[0];
+	address = buf[1];
+	temp_block = buf[2];
+	wbyte = buf[3];
+	if (0xFF == temp_block)	//the  mark is to write register else read register
+	{
+		for (i = 0; i < wbyte; i++) {
+			reg[i] = (char)buf[4 + i];
+		}
+		ret = synaptics_rmi4_i2c_write_byte(ts->client, 0xff, page);
+		ret =
+		    synaptics_rmi4_i2c_write_block(ts->client, (char)address,
+						   wbyte, reg);
+		TPD_DEBUG("%s write page=0x%x,address=0x%x\n", __func__, page,
+			  address);
+		for (i = 0; i < wbyte; i++) {
+			TPD_DEBUG("reg=0x%x\n", reg[i]);
+		}
+	} else
+		block = temp_block;
+	return count;
 }
 
 #ifdef SUPPORT_GLOVES_MODE
@@ -2475,33 +2466,41 @@ static ssize_t synaptics_rmi4_baseline_show_s3508(struct device *dev, char *buf,
 			}
 			if ((y < RX_NUM) && (x < TX_NUM)) {
 				//printk("%4d ,",baseline_data);
-				if (((baseline_data + 60) <
-				     *(baseline_data_test + count * 2))
-				    || ((baseline_data - 60) >
-					*(baseline_data_test + count * 2 +
-					  1))) {
+				if ((x == 0) && ((y == RX_NUM - 1) || (y == 0))) {
 					TPD_ERR
-					    ("touchpanel failed,RX_NUM:%d,TX_NUM:%d,baseline_data is %d,TPK_array_limit[%d*2]=%d,TPK_array_limit[%d*2+1]=%d\n ",
-					     y, x, baseline_data, count,
-					     *(baseline_data_test + count * 2),
-					     count,
-					     *(baseline_data_test + count * 2 +
-					       1));
-					if ((baseline_data <= 0)
-					    && (first_check == 0)) {
-						first_check = 1;
-						readdata_fail = 1;
+					    ("no need test RX_NUM:%d,TX_NUM:%d,baseline_data is %d\n",
+					     x, y, baseline_data);
+				} else {
+					if (((baseline_data + 60) <
+					     *(baseline_data_test + count * 2))
+					    || ((baseline_data - 60) >
+						*(baseline_data_test +
+						  count * 2 + 1))) {
+						TPD_ERR
+						    ("touchpanel failed,RX_NUM:%d,TX_NUM:%d,baseline_data is %d,TPK_array_limit[%d*2]=%d,TPK_array_limit[%d*2+1]=%d\n ",
+						     y, x, baseline_data, count,
+						     *(baseline_data_test +
+						       count * 2), count,
+						     *(baseline_data_test +
+						       count * 2 + 1));
+						if ((baseline_data <= 0)
+						    && (first_check == 0)) {
+							first_check = 1;
+							readdata_fail = 1;
+						}
+						num_read_chars +=
+						    sprintf(&
+							    (buf
+							     [num_read_chars]),
+							    "0 raw data erro baseline_data[%d][%d]=%d[%d,%d]\n",
+							    x, y, baseline_data,
+							    *(baseline_data_test
+							      + count * 2),
+							    *(baseline_data_test
+							      + count * 2 + 1));
+						error_count++;
+						goto END;
 					}
-					num_read_chars +=
-					    sprintf(&(buf[num_read_chars]),
-						    "0 raw data erro baseline_data[%d][%d]=%d[%d,%d]\n",
-						    x, y, baseline_data,
-						    *(baseline_data_test +
-						      count * 2),
-						    *(baseline_data_test +
-						      count * 2 + 1));
-					error_count++;
-					goto END;
 				}
 			}
 			/*
@@ -2760,7 +2759,7 @@ static int synaptics_input_init(struct synaptics_ts_data *ts)
 		    ("synaptics_ts_probe: Failed to allocate input device\n");
 		return ret;
 	}
-	ts->input_dev->name = TPD_DEVICE;;
+	ts->input_dev->name = TPD_NAME;
 	ts->input_dev->dev.parent = &ts->client->dev;
 	set_bit(EV_SYN, ts->input_dev->evbit);
 	set_bit(EV_ABS, ts->input_dev->evbit);
@@ -2897,10 +2896,11 @@ static int synatpitcs_fw_update(struct device *dev, bool force)
 			}
 		}
 
-	} else if (!strncmp(ts->manu_name, "s3508", 5)
-		   || !strncmp(ts->manu_name, "15811", 5)) {
+	} else if (!strncmp(ts->manu_name, "S3508", 5)
+		   || !strncmp(ts->manu_name, "15811", 5)
+		   || !strncmp(ts->manu_name, "s3508", 5)) {
 		TPD_ERR("enter version 15811 update mode\n");
-		push_component_info(TP, ts->fw_id, "s3508");
+		push_component_info(TP, ts->fw_id, "S3508");
 		ret = request_firmware(&fw, ts->fw_name, dev);
 		if (ret < 0) {
 			TPD_ERR("Request firmware failed - %s (%d)\n",
@@ -2962,8 +2962,9 @@ static ssize_t synaptics_update_fw_store(struct device *dev,
 		return size;
 	}
 	if (version_is_s3508) {
-		if (strncmp(ts->manu_name, "s3508", 5)
-		    && strncmp(ts->manu_name, "15811", 5)) {
+		if (strncmp(ts->manu_name, "S3508", 5)
+		    && strncmp(ts->manu_name, "15811", 5)
+		    && strncmp(ts->manu_name, "s3508", 5)) {
 			TPD_ERR("product name[%s] do not update!\n",
 				ts->manu_name);
 			return size;
@@ -3855,8 +3856,9 @@ static int synapitcs_ts_update(struct i2c_client *client, const uint8_t * data,
 		if (ret) {
 			return -1;
 		}
-	} else if (!strncmp(ts->manu_name, "s3508", 5)
-		   || !strncmp(ts->manu_name, "15811", 5)) {
+	} else if (!strncmp(ts->manu_name, "S3508", 5)
+		   || !strncmp(ts->manu_name, "15811", 5)
+		   || !strncmp(ts->manu_name, "s3508", 5)) {
 		parse_header(&header, data);
 		if ((header.firmware_size + header.config_size + 0x100) >
 		    data_len) {
@@ -4568,8 +4570,8 @@ static int synaptics_ts_probe(struct i2c_client *client,
 	memset(ts->test_limit_name, 0, TP_FW_NAME_MAX_LEN);
 
 	//sprintf(ts->manu_name, "TP_SYNAPTICS");
-	synaptics_rmi4_i2c_read_block(ts->client, F01_RMI_QUERY11,
-				      sizeof(ts->manu_name), ts->manu_name);
+	synaptics_rmi4_i2c_read_block(ts->client, F01_RMI_QUERY11, 10,
+				      ts->manu_name);
 	if (!strncmp(ts->manu_name, "S3718", 5)) {
 		strcpy(ts->fw_name, "tp/fw_synaptics_15801b.img");
 		version_is_s3508 = 0;
@@ -4579,7 +4581,7 @@ static int synaptics_ts_probe(struct i2c_client *client,
 	}
 
 	strcpy(ts->test_limit_name, "tp/14049/14049_Limit_jdi.img");
-	TPD_DEBUG("synatpitcs_fw: fw_name = %s,ts->manu_name:%s \n",
+	TPD_DEBUG("0synatpitcs_fw: fw_name = %s,ts->manu_name:%s \n",
 		  ts->fw_name, ts->manu_name);
 
 	//push_component_info(TP, ts->fw_id, ts->manu_name);
@@ -4630,6 +4632,9 @@ static int synaptics_ts_probe(struct i2c_client *client,
 	if (ret < 0) {
 		TPD_ERR("synaptics_input_init failed!\n");
 	}
+
+	INIT_WORK(&ts->pm_work, synaptics_suspend_resume);
+
 #if defined(CONFIG_FB)
 	ts->fb_notif.notifier_call = fb_notifier_callback;
 	ret = fb_register_client(&ts->fb_notif);
@@ -4930,6 +4935,7 @@ static int synaptics_mode_change(int mode)
 		TPD_ERR("%s: set dose mode[0x%x] err!!\n", __func__, tmp_mode);
 	return ret;
 }
+
 #if defined(CONFIG_FB)
 static int fb_notifier_callback(struct notifier_block *self,
 				unsigned long event, void *data)
@@ -4937,47 +4943,29 @@ static int fb_notifier_callback(struct notifier_block *self,
 	struct synaptics_ts_data *ts =
 	    container_of(self, struct synaptics_ts_data, fb_notif);
 	struct fb_event *evdata = data;
-	int *blank;
-	//int ret;
+	int *blank = evdata->data;
 
-	struct synaptics_ts_data *ts = container_of(self, struct synaptics_ts_data, fb_notif);
+	if (event != FB_EARLY_EVENT_BLANK)
+		return NOTIFY_OK;
 
-	if(FB_EARLY_EVENT_BLANK != event && FB_EVENT_BLANK != event)
-	return 0;
-	if((evdata) && (evdata->data) && (ts) && (ts->client))
-	{
-		blank = evdata->data;
-		TPD_DEBUG("%s blank[%d],event[0x%lx]\n", __func__,*blank,event);
-
-		if((*blank == FB_BLANK_UNBLANK || *blank == FB_BLANK_VSYNC_SUSPEND || *blank == FB_BLANK_NORMAL)\
-			//&& (event == FB_EVENT_BLANK ))
-			&& (event == FB_EARLY_EVENT_BLANK ))
-		{
-			if (ts->is_suspended == 1)
-			{
-				TPD_DEBUG("%s going TP resume start\n", __func__);
-				ts->is_suspended = 0;
-				queue_delayed_work(get_base_report, &ts->base_work,msecs_to_jiffies(1));
-				synaptics_ts_resume(&ts->client->dev);
-				//atomic_set(&ts->is_stop,0);
-				TPD_DEBUG("%s going TP resume end\n", __func__);
-			}
-		}else if( *blank == FB_BLANK_POWERDOWN && (event == FB_EARLY_EVENT_BLANK ))
-		{
-			if (ts->is_suspended == 0)
-			{
-				TPD_DEBUG("%s : going TP suspend start\n", __func__);
-				ts->is_suspended = 1;
-				atomic_set(&ts->is_stop,1);
-				if(!(ts->gesture_enable)){
-					touch_disable(ts);
-				}
-				synaptics_ts_suspend(&ts->client->dev);
-				TPD_DEBUG("%s : going TP suspend end\n", __func__);
-			}
+	switch (*blank) {
+	case FB_BLANK_UNBLANK:
+	case FB_BLANK_VSYNC_SUSPEND:
+	case FB_BLANK_NORMAL:
+		if (ts->is_suspended) {
+			ts->is_suspended = 0;
+			queue_work(system_highpri_wq, &ts->pm_work);
 		}
+		break;
+	case FB_BLANK_POWERDOWN:
+		if (!ts->is_suspended) {
+			ts->is_suspended = 1;
+			queue_work(system_highpri_wq, &ts->pm_work);
+		}
+		break;
 	}
-	return 0;
+
+	return NOTIFY_OK;
 }
 #endif
 
