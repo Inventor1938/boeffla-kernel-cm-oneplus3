@@ -160,11 +160,6 @@ struct mdss_panel_cfg {
 #define MDP_INTF_DSI_CMD_FIFO_UNDERFLOW		0x0001
 #define MDP_INTF_DSI_VIDEO_FIFO_OVERFLOW	0x0002
 
-
-enum {
-	MDP_INTF_CALLBACK_DSI_WAIT,
-};
-
 struct mdss_intf_recovery {
 	void (*fxn)(void *ctx, int event);
 	void *data;
@@ -217,7 +212,6 @@ struct mdss_intf_recovery {
  *				- 1: update to command mode
  * @MDSS_EVENT_REGISTER_RECOVERY_HANDLER: Event to recover the interface in
  *					case there was any errors detected.
- * @MDSS_EVENT_REGISTER_MDP_CALLBACK: Event to register callback to MDP driver.
  * @MDSS_EVENT_DSI_PANEL_STATUS: Event to check the panel status
  *				<= 0: panel check fail
  *				>  0: panel check success
@@ -256,7 +250,6 @@ enum mdss_intf_events {
 	MDSS_EVENT_DSI_STREAM_SIZE,
 	MDSS_EVENT_DSI_UPDATE_PANEL_DATA,
 	MDSS_EVENT_REGISTER_RECOVERY_HANDLER,
-	MDSS_EVENT_REGISTER_MDP_CALLBACK,
 	MDSS_EVENT_DSI_PANEL_STATUS,
 	MDSS_EVENT_DSI_DYNAMIC_SWITCH,
 	MDSS_EVENT_DSI_RECONFIG_CMD,
@@ -284,6 +277,8 @@ struct lcd_panel_info {
 	/* Pad height */
 	u32 yres_pad;
 	u32 frame_rate;
+	u32 h_polarity;
+	u32 v_polarity;
 };
 
 
@@ -726,6 +721,9 @@ struct mdss_panel_info {
 
 	/* debugfs structure for the panel */
 	struct mdss_panel_debugfs_info *debugfs_info;
+
+	/* persistence mode on/off */
+	bool persist_mode;
 };
 
 struct mdss_panel_timing {
@@ -765,6 +763,7 @@ struct mdss_panel_timing {
 struct mdss_panel_data {
 	struct mdss_panel_info panel_info;
 	void (*set_backlight) (struct mdss_panel_data *pdata, u32 bl_level);
+	int (*apply_display_setting) (struct mdss_panel_data *pdata, u32 mode);
 	unsigned char *mmss_cc_base;
 
 	/**

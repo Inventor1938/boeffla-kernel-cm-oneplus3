@@ -799,7 +799,7 @@ static int adreno_cp_parse_ib2(struct kgsl_device *device,
 	 * not been processed already
 	 */
 	for (i = 0; i < ib_obj_list->num_objs; i++) {
-		struct adreno_ib_object *ib_obj = &(ib_obj_list->obj_list[i]);
+		ib_obj = &(ib_obj_list->obj_list[i]);
 		if ((SNAPSHOT_GPU_OBJECT_IB == ib_obj->snapshot_obj_type) &&
 			(gpuaddr >= ib_obj->gpuaddr) &&
 			(gpuaddr + dwords * sizeof(unsigned int) <=

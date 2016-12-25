@@ -26,6 +26,7 @@
 #include <linux/mm.h>
 #include <linux/dma-attrs.h>
 #include <linux/uaccess.h>
+#include <linux/kthread.h>
 #include <asm/cacheflush.h>
 
 /* The number of memstore arrays limits the number of contexts allowed.
@@ -36,32 +37,6 @@
 #define KGSL_PRIORITY_MAX_RB_LEVELS 4
 #define KGSL_MEMSTORE_MAX	(KGSL_MEMSTORE_SIZE / \
 	sizeof(struct kgsl_devmemstore) - 1 - KGSL_PRIORITY_MAX_RB_LEVELS)
-
-#define MEMSTORE_RB_OFFSET(rb, field)	\
-	KGSL_MEMSTORE_OFFSET(((rb)->id + KGSL_MEMSTORE_MAX), field)
-
-#define MEMSTORE_ID_GPU_ADDR(dev, iter, field) \
-	((dev)->memstore.gpuaddr + KGSL_MEMSTORE_OFFSET(iter, field))
-
-#define MEMSTORE_RB_GPU_ADDR(dev, rb, field)	\
-	((dev)->memstore.gpuaddr + \
-	 KGSL_MEMSTORE_OFFSET(((rb)->id + KGSL_MEMSTORE_MAX), field))
-
-/*
- * SCRATCH MEMORY: The scratch memory is one page worth of data that
- * is mapped into the GPU. This allows for some 'shared' data between
- * the GPU and CPU. For example, it will be used by the GPU to write
- * each updated RPTR for each RB.
- *
- * Used Data:
- * Offset: Length(bytes): What
- * 0x0: 4 * KGSL_PRIORITY_MAX_RB_LEVELS: RB0 RPTR
- */
-
-/* Shadow global helpers */
-#define SCRATCH_RPTR_OFFSET(id) ((id) * sizeof(unsigned int))
-#define SCRATCH_RPTR_GPU_ADDR(dev, id) \
-	((dev)->scratch.gpuaddr + SCRATCH_RPTR_OFFSET(id))
 
 /* Timestamp window used to detect rollovers (half of integer range) */
 #define KGSL_TIMESTAMP_WINDOW 0x80000000
@@ -132,6 +107,8 @@ struct kgsl_driver {
 	unsigned int full_cache_threshold;
 	struct workqueue_struct *workqueue;
 	struct workqueue_struct *mem_workqueue;
+	struct kthread_worker worker;
+	struct task_struct *worker_thread;
 };
 
 extern struct kgsl_driver kgsl_driver;
@@ -163,8 +140,6 @@ struct kgsl_memdesc_ops {
 #define KGSL_MEMDESC_PRIVILEGED BIT(6)
 /* The memdesc is TZ locked content protection */
 #define KGSL_MEMDESC_TZ_LOCKED BIT(7)
-/* The memdesc is allocated through contiguous memory */
-#define KGSL_MEMDESC_CONTIG BIT(8)
 
 /**
  * struct kgsl_memdesc - GPU memory object descriptor
@@ -181,9 +156,8 @@ struct kgsl_memdesc_ops {
  * @ops: Function hooks for the memdesc memory type
  * @flags: Flags set from userspace
  * @dev: Pointer to the struct device that owns this memory
- * @attrs: dma attributes for this memory
- * @pages: An array of pointers to allocated pages
- * @page_count: Total number of pages allocated
+ * @memmap: bitmap of pages for mmapsize
+ * @memmap_len: Number of bits for memmap
  */
 struct kgsl_memdesc {
 	struct kgsl_pagetable *pagetable;
@@ -200,8 +174,6 @@ struct kgsl_memdesc {
 	uint64_t flags;
 	struct device *dev;
 	struct dma_attrs attrs;
-	struct page **pages;
-	unsigned int page_count;
 };
 
 /*
@@ -275,7 +247,7 @@ struct kgsl_event {
 	void *priv;
 	struct list_head node;
 	unsigned int created;
-	struct work_struct work;
+	struct kthread_work work;
 	int result;
 	struct kgsl_event_group *group;
 };
@@ -476,6 +448,21 @@ kgsl_mem_entry_put(struct kgsl_mem_entry *entry)
 {
 	if (entry)
 		kref_put(&entry->refcount, kgsl_mem_entry_destroy);
+}
+
+/**
+ * kgsl_mem_entry_put_deferred() - Schedule a task to put the memory entry
+ * @entry: Mem entry to put
+ *
+ * This function is for atomic contexts where a normal kgsl_mem_entry_put()
+ * would result in the memory entry getting destroyed and possibly taking
+ * mutexes along the way.  Schedule the work to happen outside of the atomic
+ * context.
+ */
+static inline void kgsl_mem_entry_put_deferred(struct kgsl_mem_entry *entry)
+{
+	if (entry != NULL)
+		queue_work(kgsl_driver.mem_workqueue, &entry->work);
 }
 
 /*

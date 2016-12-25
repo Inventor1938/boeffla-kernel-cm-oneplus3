@@ -202,5 +202,5 @@ ENTRY(memcpy)
 	tst	count, #0x3f
 	b.ne	.Ltail63
 	ret
-ENDPROC(memcpy)
-ENDPROC(__memcpy)
+ENDPIPROC(memcpy)
+ENDPIPROC(__memcpy)

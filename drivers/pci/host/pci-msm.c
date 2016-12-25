@@ -5255,8 +5255,10 @@ static irqreturn_t handle_global_irq(int irq, void *data)
 
 	spin_lock_irqsave(&dev->global_irq_lock, irqsave_flags);
 
-	status = readl_relaxed(dev->parf + PCIE20_PARF_INT_ALL_STATUS) &
-			readl_relaxed(dev->parf + PCIE20_PARF_INT_ALL_MASK);
+	status = readl_relaxed(dev->parf + PCIE20_PARF_INT_ALL_STATUS);
+
+	PCIE_DBG2(dev, "RC%d: Global IRQ %d received: 0x%x\n",
+		dev->rc_idx, irq, status);
 
 	msm_pcie_write_mask(dev->parf + PCIE20_PARF_INT_ALL_CLEAR, 0, status);
 

@@ -1021,6 +1021,12 @@ static int fwu_write_f34_v7_partition_id(unsigned char cmd)
 			partition = GLOBAL_PARAMETERS_PARTITION;
 		else if (fwu->config_area == FLASH_CONFIG_AREA)
 			partition = FLASH_CONFIG_PARTITION;
+		else {
+			// Shouldn't happen
+			TPD_ERR("%s: Invalid command 0x%02x\n",
+					__func__, cmd);
+			return -EINVAL;
+		}
 		break;
 	case CMD_WRITE_GUEST_CODE:
 		partition = GUEST_CODE_PARTITION;

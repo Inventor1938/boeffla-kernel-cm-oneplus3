@@ -117,17 +117,20 @@ int xhci_halt(struct xhci_hcd *xhci)
 			STS_HALT, STS_HALT, XHCI_MAX_HALT_USEC);
 	if (!ret) {
 		xhci->xhc_state |= XHCI_STATE_HALTED;
-		xhci->cmd_ring_state = CMD_RING_STATE_STOPPED;
+	} else {
+		xhci_warn(xhci, "Host not halted after %u microseconds.\n",
+				XHCI_MAX_HALT_USEC);
+	}
 
-		if (timer_pending(&xhci->cmd_timer)) {
-			xhci_dbg_trace(xhci, trace_xhci_dbg_init,
-					"Cleanup command queue");
-			del_timer(&xhci->cmd_timer);
-			xhci_cleanup_command_queue(xhci);
-		}
-	} else
-		xhci_warn(xhci, "Host not halted after %u microseconds. ret:%d\n",
-				XHCI_MAX_HALT_USEC, ret);
+	xhci->cmd_ring_state = CMD_RING_STATE_STOPPED;
+
+	if (timer_pending(&xhci->cmd_timer)) {
+		xhci_dbg_trace(xhci, trace_xhci_dbg_init,
+				"Cleanup command queue");
+		del_timer(&xhci->cmd_timer);
+		xhci_cleanup_command_queue(xhci);
+	}
+
 	return ret;
 }
 
@@ -644,7 +647,7 @@ int xhci_run(struct usb_hcd *hcd)
 			"// Set the interrupt modulation register");
 	temp = readl(&xhci->ir_set->irq_control);
 	temp &= ~ER_IRQ_INTERVAL_MASK;
-	temp |= (u32) XHCI_INT_MODERATION_VAL;
+	temp |= (u32) 160;
 	writel(temp, &xhci->ir_set->irq_control);
 
 	/* Set the HCD state before we enable the irqs */

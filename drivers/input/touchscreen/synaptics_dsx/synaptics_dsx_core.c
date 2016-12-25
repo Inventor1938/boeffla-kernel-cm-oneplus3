@@ -998,10 +998,6 @@ static int synaptics_rmi4_f11_abs_report(struct synaptics_rmi4_data *rmi4_data,
 			if (rmi4_data->hw_if->board_data->y_flip)
 				y = rmi4_data->sensor_max_y - y;
 
-			input_report_key(rmi4_data->input_dev,
-					BTN_TOUCH, 1);
-			input_report_key(rmi4_data->input_dev,
-					BTN_TOOL_FINGER, 1);
 			input_report_abs(rmi4_data->input_dev,
 					 ABS_MT_POSITION_X, x);
 			input_report_abs(rmi4_data->input_dev,
@@ -1030,10 +1026,6 @@ static int synaptics_rmi4_f11_abs_report(struct synaptics_rmi4_data *rmi4_data,
 	}
 
 	if (touch_count == 0) {
-		input_report_key(rmi4_data->input_dev,
-				BTN_TOUCH, 0);
-		input_report_key(rmi4_data->input_dev,
-				BTN_TOOL_FINGER, 0);
 #ifndef TYPE_B_PROTOCOL
 		input_mt_sync(rmi4_data->input_dev);
 #endif
@@ -1171,10 +1163,6 @@ static int synaptics_rmi4_f12_abs_report(struct synaptics_rmi4_data *rmi4_data,
 			if (rmi4_data->hw_if->board_data->y_flip)
 				y = rmi4_data->sensor_max_y - y;
 
-			input_report_key(rmi4_data->input_dev,
-					BTN_TOUCH, 1);
-			input_report_key(rmi4_data->input_dev,
-					BTN_TOOL_FINGER, 1);
 			input_report_abs(rmi4_data->input_dev,
 					 ABS_MT_POSITION_X, x);
 			input_report_abs(rmi4_data->input_dev,
@@ -1209,10 +1197,6 @@ static int synaptics_rmi4_f12_abs_report(struct synaptics_rmi4_data *rmi4_data,
 	}
 
 	if (touch_count == 0) {
-		input_report_key(rmi4_data->input_dev,
-				BTN_TOUCH, 0);
-		input_report_key(rmi4_data->input_dev,
-				BTN_TOOL_FINGER, 0);
 #ifndef TYPE_B_PROTOCOL
 		input_mt_sync(rmi4_data->input_dev);
 #endif
@@ -2973,8 +2957,6 @@ static int synaptics_rmi4_set_input_dev(struct synaptics_rmi4_data *rmi4_data)
 	set_bit(EV_SYN, rmi4_data->input_dev->evbit);
 	set_bit(EV_KEY, rmi4_data->input_dev->evbit);
 	set_bit(EV_ABS, rmi4_data->input_dev->evbit);
-	set_bit(BTN_TOUCH, rmi4_data->input_dev->keybit);
-	set_bit(BTN_TOOL_FINGER, rmi4_data->input_dev->keybit);
 #ifdef INPUT_PROP_DIRECT
 	set_bit(INPUT_PROP_DIRECT, rmi4_data->input_dev->propbit);
 #endif
@@ -3237,10 +3219,6 @@ static int synaptics_rmi4_free_fingers(struct synaptics_rmi4_data *rmi4_data)
 					   MT_TOOL_FINGER, 0);
 	}
 #endif
-	input_report_key(rmi4_data->input_dev,
-			BTN_TOUCH, 0);
-	input_report_key(rmi4_data->input_dev,
-			BTN_TOOL_FINGER, 0);
 #ifndef TYPE_B_PROTOCOL
 	input_mt_sync(rmi4_data->input_dev);
 #endif
@@ -3638,6 +3616,40 @@ static int synaptics_rmi4_probe(struct platform_device *pdev)
 				"%s: Failed to set up GPIO's\n", __func__);
 			goto err_config_gpio;
 		}
+	} else {
+		retval = synaptics_dsx_pinctrl_init(rmi4_data);
+		if (!retval && rmi4_data->ts_pinctrl) {
+			/*
+			 * Pinctrl handle is optional. If pinctrl handle is found
+			 * let pins to be configured in active state. If not
+			 * found continue further without error.
+			 */
+			retval = pinctrl_select_state(rmi4_data->ts_pinctrl,
+						      rmi4_data->
+						      pinctrl_state_active);
+			if (retval < 0) {
+				dev_err(&pdev->dev,
+					"%s: Failed to select %s pinstate %d\n",
+					__func__, PINCTRL_STATE_ACTIVE, retval);
+			}
+		}
+
+		retval = synaptics_dsx_gpio_configure(rmi4_data, true);
+		if (retval < 0) {
+			dev_err(&pdev->dev,
+				"%s: Failed to set up GPIO's\n", __func__);
+			goto err_config_gpio;
+		}
+	}
+
+	if (bdata->fw_name) {
+		len = strlen(bdata->fw_name);
+		if (len > SYNA_FW_NAME_MAX_LEN - 1) {
+			dev_err(&pdev->dev, "Invalid firmware name\n");
+			goto err_set_input_dev;
+		}
+
+		strlcpy(rmi4_data->fw_name, bdata->fw_name, len + 1);
 	}
 
 	if (bdata->fw_name) {

@@ -808,7 +808,7 @@ static int mmc_blk_ioctl_rpmb_cmd(struct block_device *bdev,
 {
 	struct mmc_blk_ioc_rpmb_data *idata;
 	struct mmc_blk_data *md;
-	struct mmc_card *card;
+	struct mmc_card *card = NULL;
 	struct mmc_command cmd = {0};
 	struct mmc_data data = {0};
 	struct mmc_request mrq = {NULL};
@@ -964,7 +964,7 @@ idata_free:
 
 cmd_done:
 	mmc_blk_put(md);
-	if (card->cmdq_init)
+	if (card && card->cmdq_init)
 		wake_up(&card->host->cmdq_ctx.wait);
 	return err;
 }
@@ -4098,14 +4098,7 @@ static int mmc_blk_probe(struct mmc_card *card)
 	}
 
 	pm_runtime_set_autosuspend_delay(&card->dev, MMC_AUTOSUSPEND_DELAY_MS);
-	/*
-	 * If there is a runtime_idle function, it should take care of
-	 * suspending the card
-	 */
-	if (card->host->bus_ops->runtime_idle)
-		pm_runtime_dont_use_autosuspend(&card->dev);
-	else
-		pm_runtime_use_autosuspend(&card->dev);
+	pm_runtime_use_autosuspend(&card->dev);
 
 	/*
 	 * Don't enable runtime PM for SD-combo cards here. Leave that

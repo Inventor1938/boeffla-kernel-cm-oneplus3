@@ -301,6 +301,10 @@ static void power_supply_callback(struct power_supply *psy)
 				POWER_SUPPLY_PROP_PRESENT, &ret);
 		if (usb_state == 0)
 			is_usb_present = ret.intval;
+		else
+			is_usb_present = false;
+	} else {
+		is_usb_present = false;
 	}
 	//taokai@bsp add end 2016.03.11
 	if (!bms_psy)
