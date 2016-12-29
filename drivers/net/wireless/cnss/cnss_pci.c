@@ -1456,7 +1456,7 @@ static ssize_t cnss_version_information_show(struct device *dev,
 	if (!penv)
 		return -ENODEV;
 	return scnprintf(buf, PAGE_SIZE, "%u.%u.%u.%u\n", (fw_version & 0xf0000000) >> 28,
-		(fw_version & 0xf000000) >> 24, (fw_version & 0xf00000) >> 20, fw_version & 0x7fff);
+        (fw_version & 0xf000000) >> 24, (fw_version & 0xf00000) >> 20, fw_version & 0x7fff);
 }
 
 static DEVICE_ATTR(cnss_version_information, 0444,
@@ -1490,7 +1490,7 @@ static int cnss_smmu_init(struct device *dev)
 	struct dma_iommu_mapping *mapping;
 	int disable_htw = 1;
 	int atomic_ctx = 1;
-	int ret = 0;
+	int ret;
 
 	mapping = arm_iommu_create_mapping(&platform_bus_type,
 					   penv->smmu_iova_start,
@@ -3070,8 +3070,8 @@ skip_ramdump:
 		goto err_bus_reg;
 	}
 
-	/* product information */
-	push_component_info(WCN, "QCA6164A", "QualComm");
+        /* product information */
+        push_component_info(WCN, "QCA6164A", "QualComm");
 
 	pr_info("cnss: Platform driver probed successfully.\n");
 	return ret;

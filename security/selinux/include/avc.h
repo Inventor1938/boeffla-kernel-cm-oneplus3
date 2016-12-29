@@ -97,7 +97,7 @@ static inline u32 avc_audit_required(u32 requested,
 		audited = denied = requested;
 	else
 		audited = requested & avd->auditallow;
-	*deniedp = 0;
+	*deniedp = denied;
 	return audited;
 }
 
@@ -137,7 +137,7 @@ static inline int avc_audit(u32 ssid, u32 tsid,
 	if (likely(!audited))
 		return 0;
 	return slow_avc_audit(ssid, tsid, tclass,
-			      requested, audited, 0, result,
+			      requested, audited, denied, result,
 			      a, 0);
 }
 

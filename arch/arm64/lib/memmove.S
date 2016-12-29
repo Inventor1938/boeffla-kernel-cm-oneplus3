@@ -198,5 +198,5 @@ ENTRY(memmove)
 	tst	count, #0x3f
 	b.ne	.Ltail63
 	ret
-ENDPIPROC(memmove)
-ENDPIPROC(__memmove)
+ENDPROC(memmove)
+ENDPROC(__memmove)

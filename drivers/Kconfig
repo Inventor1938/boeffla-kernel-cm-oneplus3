@@ -192,8 +192,6 @@ source "drivers/ras/Kconfig"
 
 source "drivers/thunderbolt/Kconfig"
 
-source "drivers/tee/Kconfig"
-
 source "drivers/sensors/Kconfig"
 
 source "drivers/firmware/Kconfig"

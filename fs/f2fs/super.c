@@ -86,7 +86,6 @@ enum {
 	Opt_inline_data,
 	Opt_inline_dentry,
 	Opt_flush_merge,
-	Opt_noflush_merge,
 	Opt_nobarrier,
 	Opt_fastboot,
 	Opt_extent_cache,
@@ -113,7 +112,6 @@ static match_table_t f2fs_tokens = {
 	{Opt_inline_data, "inline_data"},
 	{Opt_inline_dentry, "inline_dentry"},
 	{Opt_flush_merge, "flush_merge"},
-	{Opt_noflush_merge, "noflush_merge"},
 	{Opt_nobarrier, "nobarrier"},
 	{Opt_fastboot, "fastboot"},
 	{Opt_extent_cache, "extent_cache"},
@@ -479,9 +477,6 @@ static int parse_options(struct super_block *sb, char *options)
 			break;
 		case Opt_flush_merge:
 			set_opt(sbi, FLUSH_MERGE);
-			break;
-		case Opt_noflush_merge:
-			clear_opt(sbi, FLUSH_MERGE);
 			break;
 		case Opt_nobarrier:
 			set_opt(sbi, NOBARRIER);
@@ -889,7 +884,6 @@ static void default_options(struct f2fs_sb_info *sbi)
 	set_opt(sbi, BG_GC);
 	set_opt(sbi, INLINE_DATA);
 	set_opt(sbi, EXTENT_CACHE);
-	set_opt(sbi, FLUSH_MERGE);
 
 #ifdef CONFIG_F2FS_FS_XATTR
 	set_opt(sbi, XATTR_USER);
@@ -1568,6 +1562,7 @@ try_onemore:
 	sbi->raw_super = raw_super;
 	sbi->valid_super_block = valid_super_block;
 	mutex_init(&sbi->gc_mutex);
+	mutex_init(&sbi->writepages);
 	mutex_init(&sbi->cp_mutex);
 	init_rwsem(&sbi->node_write);
 

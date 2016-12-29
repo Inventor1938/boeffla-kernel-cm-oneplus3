@@ -2401,7 +2401,7 @@ static int qpnp_flash_led_probe(struct spmi_device *spmi)
 	struct qpnp_flash_led *led;
 	struct resource *flash_resource;
 	struct device_node *node, *temp;
-	struct dentry *root = NULL, *file;
+	struct dentry *root, *file;
 	int rc, i = 0, j, num_leds = 0;
 	u32 val;
 
@@ -2618,8 +2618,6 @@ error_led_register:
 		j = ARRAY_SIZE(qpnp_flash_led_attrs) - 1;
 		led_classdev_unregister(&led->flash_node[i].cdev);
 	}
-	if (!IS_ERR_OR_NULL(root))
-		debugfs_remove_recursive(root);
 	mutex_destroy(&led->flash_led_lock);
 	destroy_workqueue(led->ordered_workq);
 

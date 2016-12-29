@@ -6879,11 +6879,6 @@ F:	arch/*/oprofile/
 F:	drivers/oprofile/
 F:	include/linux/oprofile.h
 
-OP-TEE DRIVER
-M:	Jens Wiklander <jens.wiklander@linaro.org>
-S:	Maintained
-F:	drivers/tee/optee/
-
 ORACLE CLUSTER FILESYSTEM 2 (OCFS2)
 M:	Mark Fasheh <mfasheh@suse.com>
 M:	Joel Becker <jlbec@evilplan.org>
@@ -7146,14 +7141,6 @@ M:	Mohit Kumar <mohit.kumar@st.com>
 L:	linux-pci@vger.kernel.org
 S:	Maintained
 F:	drivers/pci/host/*spear*
-
-PCI MSI DRIVER FOR APPLIEDMICRO XGENE
-M:	Duc Dang <dhdang@apm.com>
-L:	linux-pci@vger.kernel.org
-L:	linux-arm-kernel@lists.infradead.org
-S:	Maintained
-F:	Documentation/devicetree/bindings/pci/xgene-pci-msi.txt
-F:	drivers/pci/host/pci-xgene-msi.c
 
 PCMCIA SUBSYSTEM
 P:	Linux PCMCIA Team
@@ -8169,14 +8156,6 @@ L:	linux-mmc@vger.kernel.org
 S:	Maintained
 F:	include/linux/mmc/dw_mmc.h
 F:	drivers/mmc/host/dw_mmc*
-
-TEE SUBSYSTEM
-M:	Jens Wiklander <jens.wiklander@linaro.org>
-S:	Maintained
-F:	include/linux/tee_drv.h
-F:	include/uapi/linux/tee.h
-F:	drivers/tee/
-F:	Documentation/tee.txt
 
 THUNDERBOLT DRIVER
 M:	Andreas Noever <andreas.noever@gmail.com>

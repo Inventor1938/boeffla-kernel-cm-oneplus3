@@ -230,9 +230,6 @@ static int __recover_dot_dentries(struct inode *dir, nid_t pino)
 	if (de) {
 		f2fs_dentry_kunmap(dir, page);
 		f2fs_put_page(page, 0);
-	} else if (IS_ERR(page)) {
-		err = PTR_ERR(page);
-		goto out;
 	} else {
 		err = __f2fs_add_link(dir, &dot, NULL, dir->i_ino, S_IFDIR);
 		if (err)
@@ -243,8 +240,6 @@ static int __recover_dot_dentries(struct inode *dir, nid_t pino)
 	if (de) {
 		f2fs_dentry_kunmap(dir, page);
 		f2fs_put_page(page, 0);
-	} else if (IS_ERR(page)) {
-		err = PTR_ERR(page);
 	} else {
 		err = __f2fs_add_link(dir, &dotdot, NULL, pino, S_IFDIR);
 	}
@@ -286,11 +281,8 @@ static struct dentry *f2fs_lookup(struct inode *dir, struct dentry *dentry,
 		return ERR_PTR(-ENAMETOOLONG);
 
 	de = f2fs_find_entry(dir, &dentry->d_name, &page);
-	if (!de) {
-		if (IS_ERR(page))
-			return (struct dentry *)page;
+	if (!de)
 		return d_splice_alias(inode, dentry);
-	}
 
 	ino = le32_to_cpu(de->ino);
 	f2fs_dentry_kunmap(dir, page);

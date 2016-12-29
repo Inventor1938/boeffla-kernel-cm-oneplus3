@@ -1370,7 +1370,9 @@ static int qcom_ice_config_start(struct platform_device *pdev,
 		struct request *req,
 		struct ice_data_setting *setting, bool async)
 {
+	struct ice_crypto_setting *crypto_data;
 	struct ice_crypto_setting pfk_crypto_data = {0};
+	union map_info *info;
 	int ret = 0;
 	bool is_pfe = false;
 
@@ -1413,13 +1415,6 @@ static int qcom_ice_config_start(struct platform_device *pdev,
 	 * based request, check BIO_DONT_FREE flag
 	 */
 	if (bio_flagged(req->bio, BIO_INLINECRYPT)) {
-#ifndef CONFIG_BLK_DEV_DM
-		pr_err("%s: dm-verity disabled!\n", __func__);
-		return -EINVAL;
-#else
-		struct ice_crypto_setting *crypto_data;
-		union map_info *info;
-
 		info = dm_get_rq_mapinfo(req);
 		if (!info) {
 			pr_debug("%s info not available in request\n",
@@ -1436,7 +1431,6 @@ static int qcom_ice_config_start(struct platform_device *pdev,
 
 		return qti_ice_setting_config(req, pdev,
 				crypto_data, setting);
-#endif
 	}
 
 	/*

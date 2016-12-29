@@ -120,7 +120,6 @@ int pci_claim_resource(struct pci_dev *dev, int resource)
 	if (!root) {
 		dev_info(&dev->dev, "can't claim BAR %d %pR: no compatible bridge window\n",
 			 resource, res);
-		res->flags |= IORESOURCE_UNSET;
 		return -EINVAL;
 	}
 
@@ -128,7 +127,6 @@ int pci_claim_resource(struct pci_dev *dev, int resource)
 	if (conflict) {
 		dev_info(&dev->dev, "can't claim BAR %d %pR: address conflict with %s %pR\n",
 			 resource, res, conflict->name, conflict);
-		res->flags |= IORESOURCE_UNSET;
 		return -EBUSY;
 	}
 

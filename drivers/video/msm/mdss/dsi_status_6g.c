@@ -129,7 +129,7 @@ void mdss_check_dsi_ctrl_status(struct work_struct *work, uint32_t interval)
 	 * command and data arbitration is possible in h/w
 	 */
 
-	if (mipi->mode == DSI_CMD_MODE)
+	if ((mipi->mode == DSI_CMD_MODE) && !ctrl_pdata->burst_mode_enabled)
 		mutex_lock(&mdp5_data->ov_lock);
 	mutex_lock(&ctl->offlock);
 

@@ -1310,7 +1310,6 @@ struct task_struct {
 	atomic_t usage;
 	unsigned int flags;	/* per process flags, defined below */
 	unsigned int ptrace;
-	unsigned int yield_count;
 	unsigned int kill_flag;
 
 #ifdef CONFIG_SMP

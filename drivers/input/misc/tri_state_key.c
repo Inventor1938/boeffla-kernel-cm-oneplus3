@@ -83,37 +83,32 @@ static void send_input(int keyCode)
 
 static void switch_dev_work(struct work_struct *work)
 {
-	int keyCode, mode, key_state[3];
 
-	key_state[0] = gpio_get_value(switch_data->key1_gpio);
-	key_state[1] = gpio_get_value(switch_data->key2_gpio);
-	key_state[2] = gpio_get_value(switch_data->key3_gpio);
-
-	/* Spurious interrupt; at least one of the pins should be zero */
-	if (key_state[0] && key_state[1] && key_state[2])
-		return;
-
+	int keyCode;
+	int mode;
 	mutex_lock(&sem);
 
-	if (!key_state[0]) {
-		mode = MODE_MUTE;
-		keyCode = keyCode_slider_top;
-	} else if (!key_state[1]) {
-		mode = MODE_DO_NOT_DISTURB;
+	if(!gpio_get_value(switch_data->key2_gpio))
+	{
+		mode = 2;
 		keyCode = keyCode_slider_middle;
-	} else {
-		mode = MODE_NORMAL;
+	}
+	else if(!gpio_get_value(switch_data->key3_gpio))
+	{
+		mode = 3;
 		keyCode = keyCode_slider_bottom;
 	}
-
+	else if(!gpio_get_value(switch_data->key1_gpio))
+	{
+		mode = 1;
+		keyCode = keyCode_slider_top;
+	}
         if (current_mode != mode) {
 		current_mode = mode;
 		switch_set_state(&switch_data->sdev, current_mode);
 		send_input(keyCode);
-		pr_info("%s: tristate set to state(%d)\n",
-				__func__, switch_data->sdev.state);
+		printk("%s ,tristate set to state(%d) \n", __func__, switch_data->sdev.state);
 	}
-
 	mutex_unlock(&sem);
 }
 

@@ -22,7 +22,6 @@
 #include <linux/notifier.h>
 #include <linux/irqreturn.h>
 #include <linux/kref.h>
-#include <linux/kthread.h>
 
 #include "mdss.h"
 #include "mdss_mdp_hwio.h"
@@ -630,7 +629,8 @@ struct mdss_mdp_ctl {
 	/* vsync handler for FRC */
 	struct mdss_mdp_vsync_handler frc_vsync_handler;
 
-	bool commit_in_progress;
+	/* dynamic resolution switch during cont-splash handoff */
+	bool switch_with_handoff;
 };
 
 struct mdss_mdp_mixer {
@@ -994,6 +994,7 @@ struct mdss_overlay_private {
 
 	struct sw_sync_timeline *vsync_timeline;
 	struct mdss_mdp_vsync_handler vsync_retire_handler;
+	struct work_struct retire_work;
 	int retire_cnt;
 	bool kickoff_released;
 	u32 cursor_ndx[2];
@@ -1005,10 +1006,6 @@ struct mdss_overlay_private {
 	bool allow_kickoff;
 	/* video frame info used by deterministic frame rate control */
 	struct mdss_mdp_frc_fsm *frc_fsm;
-
-	struct kthread_worker worker;
-	struct kthread_work vsync_work;
-	struct task_struct *thread;
 };
 
 struct mdss_mdp_set_ot_params {
@@ -1542,6 +1539,37 @@ static inline bool mdss_mdp_is_map_needed(struct mdss_data_type *mdata,
 	return true;
 }
 
+static inline u32 mdss_mdp_get_rotator_dst_format(u32 in_format, u32 in_rot90,
+	u32 bwc)
+{
+	switch (in_format) {
+	case MDP_RGB_565:
+	case MDP_BGR_565:
+		if (in_rot90)
+			return MDP_RGB_888;
+		else
+			return in_format;
+	case MDP_RGBA_8888:
+		if (bwc)
+			return MDP_BGRA_8888;
+		else
+			return in_format;
+	case MDP_Y_CBCR_H2V2_VENUS:
+	case MDP_Y_CRCB_H2V2_VENUS:
+	case MDP_Y_CBCR_H2V2:
+		if (in_rot90)
+			return MDP_Y_CRCB_H2V2;
+		else
+			return in_format;
+	case MDP_Y_CB_CR_H2V2:
+	case MDP_Y_CR_CB_GH2V2:
+	case MDP_Y_CR_CB_H2V2:
+		return MDP_Y_CRCB_H2V2;
+	default:
+		return in_format;
+	}
+}
+
 irqreturn_t mdss_mdp_isr(int irq, void *ptr);
 void mdss_mdp_irq_clear(struct mdss_data_type *mdata,
 		u32 intr_type, u32 intf_num);
@@ -1893,6 +1921,7 @@ void mdss_mdp_frc_fsm_change_state(struct mdss_mdp_frc_fsm *frc_fsm,
 	enum mdss_mdp_frc_state_type state,
 	void (*cb)(struct mdss_mdp_frc_fsm *frc_fsm));
 void mdss_mdp_frc_fsm_update_state(struct mdss_mdp_frc_fsm *frc_fsm);
+void mdss_mdp_set_supported_formats(struct mdss_data_type *mdata);
 
 #ifdef CONFIG_FB_MSM_MDP_NONE
 struct mdss_data_type *mdss_mdp_get_mdata(void)

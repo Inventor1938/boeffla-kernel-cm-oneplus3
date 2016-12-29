@@ -276,7 +276,7 @@ static struct of_device_id msm_hs_match_table[] = {
 #define BAM_PIPE_MAX 11
 #define BUS_SCALING 1
 #define BUS_RESET 0
-#define RX_FLUSH_COMPLETE_TIMEOUT 300 /* In jiffies */
+#define RX_FLUSH_COMPLETE_TIMEOUT 500 /* In jiffies */
 #define BLSP_UART_CLK_FMAX 63160000
 
 static struct dentry *debug_base;
@@ -1584,6 +1584,16 @@ static void flip_insert_work(struct work_struct *work)
 	struct tty_struct *tty = msm_uport->uport.state->port.tty;
 
 	spin_lock_irqsave(&msm_uport->uport.lock, flags);
+	if (!tty || msm_uport->rx.flush == FLUSH_SHUTDOWN) {
+		dev_err(msm_uport->uport.dev,
+			"%s:Invalid driver state flush %d\n",
+				__func__, msm_uport->rx.flush);
+		MSM_HS_ERR("%s:Invalid driver state flush %d\n",
+				__func__, msm_uport->rx.flush);
+		spin_unlock_irqrestore(&msm_uport->uport.lock, flags);
+		return;
+	}
+
 	if (msm_uport->rx.buffer_pending == NONE_PENDING) {
 		MSM_HS_ERR("Error: No buffer pending in %s", __func__);
 		spin_unlock_irqrestore(&msm_uport->uport.lock, flags);
@@ -1655,6 +1665,16 @@ static void msm_serial_hs_rx_work(struct kthread_work *work)
 	pdata = pdev->dev.platform_data;
 
 	spin_lock_irqsave(&uport->lock, flags);
+
+	if (!tty || rx->flush == FLUSH_SHUTDOWN) {
+		dev_err(uport->dev, "%s:Invalid driver state flush %d\n",
+				__func__, rx->flush);
+		MSM_HS_ERR("%s:Invalid driver state flush %d\n",
+				__func__, rx->flush);
+		spin_unlock_irqrestore(&uport->lock, flags);
+		msm_hs_resource_unvote(msm_uport);
+		return;
+	}
 
 	/*
 	 * Process all pending descs or if nothing is
@@ -2621,8 +2641,17 @@ static int msm_hs_startup(struct uart_port *uport)
 
 	/* Connect RX */
 	flush_kthread_worker(&msm_uport->rx.kworker);
-	if (rx->flush != FLUSH_SHUTDOWN)
+	if (rx->flush != FLUSH_SHUTDOWN){
+                //waynechang, 20160413, wait for sps_transfer_one to prevent memory poison overwritten
+	    if(msm_uport->rx_bam_inprogress){
+		    ret = wait_event_timeout(msm_uport->rx.wait,
+		                             msm_uport->rx_bam_inprogress == false,
+					     RX_FLUSH_COMPLETE_TIMEOUT);
+            if(!ret)
+              MSM_HS_ERR("msm_serial_hs: waiting for SPS RX transfer timeout\n");
+        }
 		disconnect_rx_endpoint(msm_uport);
+	}
 	ret = msm_hs_spsconnect_rx(uport);
 	if (ret) {
 		MSM_HS_ERR("msm_serial_hs: SPS connect failed for RX");
@@ -3651,12 +3680,12 @@ static void msm_hs_shutdown(struct uart_port *uport)
 
 	if (msm_uport->rx.flush != FLUSH_SHUTDOWN) {
 		/* disable and disconnect rx */
-		msm_hs_disconnect_rx(uport);
 		ret = wait_event_timeout(msm_uport->rx.wait,
-				msm_uport->rx.flush == FLUSH_SHUTDOWN, 500);
+				!msm_uport->rx.pending_flag, 500);
 		if (!ret)
 			MSM_HS_WARN("%s(): rx disconnect not complete",
 				__func__);
+		msm_hs_disconnect_rx(uport);
 	}
 
 	cancel_delayed_work_sync(&msm_uport->rx.flip_insert_work);
