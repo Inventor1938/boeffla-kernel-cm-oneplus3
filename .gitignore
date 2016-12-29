@@ -43,7 +43,12 @@ modules.builtin
 /vmlinuz
 /System.map
 /Module.markers
-/Module.symvers
+/*.img
+/*.zip
+
+# ramfs
+!/ramdisk/**
+!/recovery/**
 
 #
 # Debian directory (make deb-pkg)

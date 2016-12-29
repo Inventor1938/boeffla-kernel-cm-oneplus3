@@ -74,6 +74,12 @@ static int sdcardfs_d_revalidate(struct dentry *dentry, unsigned int flags)
 		goto out;
 	}
 
+	if (dentry == lower_dentry) {
+		err = 0;
+		panic("sdcardfs: dentry is equal to lower_dentry\n");
+		goto out;
+	}
+
 	if (dentry < lower_dentry) {
 		spin_lock(&dentry->d_lock);
 		spin_lock(&lower_dentry->d_lock);
@@ -148,8 +154,8 @@ static int sdcardfs_hash_ci(const struct dentry *dentry,
  * Case insensitive compare of two vfat names.
  */
 static int sdcardfs_cmp_ci(const struct dentry *parent,
-		const struct dentry *dentry,
-		unsigned int len, const char *str, const struct qstr *name)
+		const struct dentry *dentry, unsigned int len,
+		const char *str, const struct qstr *name)
 {
 	/* This function is copy of vfat_cmpi */
 	// FIXME Should we support national language?
@@ -172,15 +178,10 @@ static int sdcardfs_cmp_ci(const struct dentry *parent,
 	return 1;
 }
 
-static void sdcardfs_canonical_path(const struct path *path, struct path *actual_path) {
-	sdcardfs_get_real_lower(path->dentry, actual_path);
-}
-
 const struct dentry_operations sdcardfs_ci_dops = {
 	.d_revalidate	= sdcardfs_d_revalidate,
 	.d_release	= sdcardfs_d_release,
 	.d_hash 	= sdcardfs_hash_ci,
 	.d_compare	= sdcardfs_cmp_ci,
-	.d_canonical_path = sdcardfs_canonical_path,
 };
 

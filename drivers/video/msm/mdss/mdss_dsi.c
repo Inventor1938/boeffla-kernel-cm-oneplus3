@@ -48,47 +48,17 @@ static struct mdss_dsi_data *mdss_dsi_res;
 
 static struct pm_qos_request mdss_dsi_pm_qos_request;
 
-static void mdss_dsi_pm_qos_add_request(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
+static void mdss_dsi_pm_qos_add_request(void)
 {
-	struct irq_info *irq_info;
-
-	if (!ctrl_pdata || !ctrl_pdata->shared_data)
-		return;
-
-	irq_info = ctrl_pdata->dsi_hw->irq_info;
-
-	if (!irq_info)
-		return;
-
-	mutex_lock(&ctrl_pdata->shared_data->pm_qos_lock);
-	if (!ctrl_pdata->shared_data->pm_qos_req_cnt) {
-		pr_debug("%s: add request irq\n", __func__);
-
-		mdss_dsi_pm_qos_request.type = PM_QOS_REQ_AFFINE_IRQ;
-		mdss_dsi_pm_qos_request.irq = irq_info->irq;
-		pm_qos_add_request(&mdss_dsi_pm_qos_request,
-			PM_QOS_CPU_DMA_LATENCY, PM_QOS_DEFAULT_VALUE);
-	}
-	ctrl_pdata->shared_data->pm_qos_req_cnt++;
-	mutex_unlock(&ctrl_pdata->shared_data->pm_qos_lock);
+	pr_debug("%s: add request", __func__);
+	pm_qos_add_request(&mdss_dsi_pm_qos_request, PM_QOS_CPU_DMA_LATENCY,
+			PM_QOS_DEFAULT_VALUE);
 }
 
-static void mdss_dsi_pm_qos_remove_request(struct dsi_shared_data *sdata)
+static void mdss_dsi_pm_qos_remove_request(void)
 {
-	if (!sdata)
-		return;
-
-	mutex_lock(&sdata->pm_qos_lock);
-	if (sdata->pm_qos_req_cnt) {
-		sdata->pm_qos_req_cnt--;
-		if (!sdata->pm_qos_req_cnt) {
-			pr_debug("%s: remove request", __func__);
-			pm_qos_remove_request(&mdss_dsi_pm_qos_request);
-		}
-	} else {
-		pr_warn("%s: unbalanced pm_qos ref count\n", __func__);
-	}
-	mutex_unlock(&sdata->pm_qos_lock);
+	pr_debug("%s: remove request", __func__);
+	pm_qos_remove_request(&mdss_dsi_pm_qos_request);
 }
 
 static void mdss_dsi_pm_qos_update_request(int val)
@@ -1152,7 +1122,7 @@ static int mdss_dsi_off(struct mdss_panel_data *pdata, int power_state)
 		pr_err("%s: Invalid input data\n", __func__);
 		return -EINVAL;
 	}
-		printk("%s start\n",__func__);
+	printk("%s start\n",__func__);
 
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
@@ -1214,6 +1184,8 @@ panel_power_ctrl:
 	/* Initialize Max Packet size for DCS reads */
 	ctrl_pdata->cur_max_pkt_size = 0;
 end:
+	printk("%s end\n",__func__);
+
 	pr_debug("%s-:\n", __func__);
 
 	return ret;
@@ -1530,10 +1502,12 @@ static int mdss_dsi_unblank(struct mdss_panel_data *pdata)
 		mdss_dsi_clk_ctrl(sctrl, sctrl->dsi_clk_handle,
 				  MDSS_DSI_ALL_CLKS, MDSS_DSI_CLK_ON);
 
-	if (mdss_dsi_is_panel_on_lp(pdata)) {
+	if (ctrl_pdata->ctrl_state & CTRL_STATE_PANEL_LP) {
 		pr_debug("%s: dsi_unblank with panel always on\n", __func__);
 		if (ctrl_pdata->low_power_config)
 			ret = ctrl_pdata->low_power_config(pdata, false);
+		if (!ret)
+			ctrl_pdata->ctrl_state &= ~CTRL_STATE_PANEL_LP;
 		goto error;
 	}
 
@@ -1548,6 +1522,7 @@ static int mdss_dsi_unblank(struct mdss_panel_data *pdata)
 			}
 			ATRACE_END("dsi_panel_on");
 		}
+		ctrl_pdata->ctrl_state |= CTRL_STATE_PANEL_INIT;
 	}
 
 	if ((pdata->panel_info.type == MIPI_CMD_PANEL) &&
@@ -1558,8 +1533,6 @@ static int mdss_dsi_unblank(struct mdss_panel_data *pdata)
 					schedule_delayed_work(&(ctrl_pdata->techeck_work), msecs_to_jiffies(3000));
 			}
 	}
-
-	ctrl_pdata->ctrl_state |= CTRL_STATE_PANEL_INIT;
 
 error:
 	mdss_dsi_clk_ctrl(ctrl_pdata, ctrl_pdata->dsi_clk_handle,
@@ -1600,6 +1573,8 @@ static int mdss_dsi_blank(struct mdss_panel_data *pdata, int power_state)
 		pr_debug("%s: low power state requested\n", __func__);
 		if (ctrl_pdata->low_power_config)
 			ret = ctrl_pdata->low_power_config(pdata, true);
+		if (!ret)
+			ctrl_pdata->ctrl_state |= CTRL_STATE_PANEL_LP;
 		goto error;
 	}
 
@@ -1642,7 +1617,8 @@ static int mdss_dsi_blank(struct mdss_panel_data *pdata, int power_state)
 			}
 			ATRACE_END("dsi_panel_off");
 		}
-		ctrl_pdata->ctrl_state &= ~CTRL_STATE_PANEL_INIT;
+		ctrl_pdata->ctrl_state &= ~(CTRL_STATE_PANEL_INIT |
+			CTRL_STATE_PANEL_LP);
 	}
 
 error:
@@ -2442,15 +2418,6 @@ int mdss_dsi_register_recovery_handler(struct mdss_dsi_ctrl_pdata *ctrl,
 	return 0;
 }
 
-static int mdss_dsi_register_mdp_callback(struct mdss_dsi_ctrl_pdata *ctrl,
-	struct mdss_intf_recovery *mdp_callback)
-{
-	mutex_lock(&ctrl->mutex);
-	ctrl->mdp_callback = mdp_callback;
-	mutex_unlock(&ctrl->mutex);
-	return 0;
-}
-
 static struct device_node *mdss_dsi_get_fb_node_cb(struct platform_device *pdev)
 {
 	struct device_node *fb_node;
@@ -2603,10 +2570,6 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		break;
 	case MDSS_EVENT_REGISTER_RECOVERY_HANDLER:
 		rc = mdss_dsi_register_recovery_handler(ctrl_pdata,
-			(struct mdss_intf_recovery *)arg);
-		break;
-	case MDSS_EVENT_REGISTER_MDP_CALLBACK:
-		rc = mdss_dsi_register_mdp_callback(ctrl_pdata,
 			(struct mdss_intf_recovery *)arg);
 		break;
 	case MDSS_EVENT_DSI_DYNAMIC_SWITCH:
@@ -3197,12 +3160,13 @@ static int mdss_dsi_ctrl_probe(struct platform_device *pdev)
 	pr_info("%s: Dsi Ctrl->%d initialized, DSI rev:0x%x, PHY rev:0x%x\n",
 		__func__, index, ctrl_pdata->shared_data->hw_rev,
 		ctrl_pdata->shared_data->phy_rev);
-	mdss_dsi_pm_qos_add_request(ctrl_pdata);
 
 	if (index == 0)
 		ctrl_pdata->shared_data->dsi0_active = true;
 	else
 		ctrl_pdata->shared_data->dsi1_active = true;
+
+	mdss_dsi_pm_qos_add_request();
 
 	return 0;
 
@@ -3400,7 +3364,6 @@ static int mdss_dsi_res_init(struct platform_device *pdev)
 		}
 
 		mutex_init(&sdata->phy_reg_lock);
-		mutex_init(&sdata->pm_qos_lock);
 
 		for (i = 0; i < DSI_CTRL_MAX; i++) {
 			mdss_dsi_res->ctrl_pdata[i] = devm_kzalloc(&pdev->dev,
@@ -3671,7 +3634,7 @@ static int mdss_dsi_ctrl_remove(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-	mdss_dsi_pm_qos_remove_request(ctrl_pdata->shared_data);
+	mdss_dsi_pm_qos_remove_request();
 
 	if (msm_dss_config_vreg(&pdev->dev,
 			ctrl_pdata->panel_power_data.vreg_config,

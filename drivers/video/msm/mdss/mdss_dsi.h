@@ -148,6 +148,7 @@ enum dsi_pm_type {
 #define CTRL_STATE_PANEL_INIT		BIT(0)
 #define CTRL_STATE_MDP_ACTIVE		BIT(1)
 #define CTRL_STATE_DSI_ACTIVE		BIT(2)
+#define CTRL_STATE_PANEL_LP		BIT(3)
 
 #define DSI_NON_BURST_SYNCH_PULSE	0
 #define DSI_NON_BURST_SYNCH_EVENT	1
@@ -279,10 +280,6 @@ struct dsi_shared_data {
 	struct msm_bus_scale_pdata *bus_scale_table;
 	u32 bus_handle;
 	u32 bus_refcount;
-
-	/* Shared mutex for pm_qos ref count */
-	struct mutex pm_qos_lock;
-	u32 pm_qos_req_cnt;
 };
 
 struct mdss_dsi_data {
@@ -391,6 +388,8 @@ struct dsi_err_container {
 #define MDSS_DSI_COMMAND_COMPRESSION_MODE_CTRL2	0x02ac
 #define MDSS_DSI_COMMAND_COMPRESSION_MODE_CTRL3	0x02b0
 
+#define DISPLAY_LOW_PERSISTENCE_MASK    1
+
 struct mdss_dsi_ctrl_pdata {
 	int ndx;	/* panel_num */
 	int (*on) (struct mdss_panel_data *pdata);
@@ -459,12 +458,13 @@ struct mdss_dsi_ctrl_pdata {
 	u32 dsi_irq_mask;
 	struct mdss_hw *dsi_hw;
 	struct mdss_intf_recovery *recovery;
-	struct mdss_intf_recovery *mdp_callback;
 
 	struct dsi_panel_cmds on_cmds;
 	struct dsi_panel_cmds post_dms_on_cmds;
 	struct dsi_panel_cmds post_panel_on_cmds;
 	struct dsi_panel_cmds off_cmds;
+	struct dsi_panel_cmds lp_on_cmds;
+	struct dsi_panel_cmds lp_off_cmds;
 	struct dsi_panel_cmds status_cmds;
 	u32 status_cmds_rlen;
 	u32 *status_value;

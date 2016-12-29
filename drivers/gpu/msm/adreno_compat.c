@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2016, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -40,8 +40,7 @@ int adreno_getproperty_compat(struct kgsl_device *device,
 			memset(&devinfo, 0, sizeof(devinfo));
 			devinfo.device_id = device->id + 1;
 			devinfo.chip_id = adreno_dev->chipid;
-			devinfo.mmu_enabled =
-				MMU_FEATURE(&device->mmu, KGSL_MMU_PAGED);
+			devinfo.mmu_enabled = kgsl_mmu_enabled();
 			devinfo.gmem_gpubaseaddr = adreno_dev->gmem_base;
 			devinfo.gmem_sizebytes = adreno_dev->gmem_size;
 

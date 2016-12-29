@@ -25,6 +25,7 @@
 #include <linux/of_device.h>
 #include <linux/radix-tree.h>
 #include <linux/qpnp/pwm.h>
+#include <linux/delay.h>
 
 #define QPNP_LPG_DRIVER_NAME	"qcom,qpnp-pwm"
 #define QPNP_LPG_CHANNEL_BASE	"qpnp-lpg-channel-base"
@@ -1114,6 +1115,9 @@ static int qpnp_lpg_configure_lut_state(struct qpnp_pwm_chip *chip,
 	addr = SPMI_LPG_REG_ADDR(lpg_config->base_addr,
 				QPNP_ENABLE_CONTROL);
 
+	// Add 1mS delay to fix qcom known HW issue
+	mdelay(1);
+
 	if (chip->in_test_mode) {
 		test_enable = (state == QPNP_LUT_ENABLE) ? 1 : 0;
 		rc = qpnp_dtest_config(chip, test_enable);
@@ -1137,15 +1141,19 @@ static int qpnp_lpg_configure_lut_state(struct qpnp_pwm_chip *chip,
 static int qpnp_lpg_configure_lut_states(struct qpnp_pwm_chip **chips,
 				int num, enum qpnp_lut_state state)
 {
-	struct qpnp_pwm_chip *chip;
+	struct qpnp_pwm_chip *chip = NULL;
 	struct qpnp_lpg_config	*lpg_config;
 	u8			value1, value2, mask1, mask2;
-	u8			*reg1, *reg2;
-	u16			addr, addr1;
+	u8			*reg1 = NULL, *reg2 = NULL;
+	u16			addr = 0, addr1 = 0;
 	int			rc, i;
 	bool			test_enable;
 	u8 ramp_en = 0, ramp_mask = 0;
 
+	if (!num) {
+		pr_err("%s: Num is zero\n", __func__);
+		return -EINVAL;
+	}
 
 	for (i = 0; i < num; i++) {
 		chip = chips[i];

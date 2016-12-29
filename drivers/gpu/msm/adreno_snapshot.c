@@ -21,6 +21,9 @@
 #include "adreno_snapshot.h"
 #include "adreno_a5xx.h"
 
+/* Number of dwords of ringbuffer history to record */
+#define NUM_DWORDS_OF_RINGBUFFER_HISTORY 100
+
 #define VPC_MEMORY_BANKS 4
 
 /* Maintain a list of the objects we see during parsing */
@@ -231,9 +234,10 @@ static inline void parse_ib(struct kgsl_device *device,
 static inline bool iommu_is_setstate_addr(struct kgsl_device *device,
 		uint64_t gpuaddr, uint64_t size)
 {
-	struct kgsl_iommu *iommu = KGSL_IOMMU_PRIV(device);
+	struct kgsl_iommu *iommu = device->mmu.priv;
 
-	if (kgsl_mmu_get_mmutype(device) != KGSL_MMU_TYPE_IOMMU)
+	if (kgsl_mmu_get_mmutype() != KGSL_MMU_TYPE_IOMMU ||
+		iommu == NULL)
 		return false;
 
 	return kgsl_gpuaddr_in_memdesc(&iommu->setstate, gpuaddr,
@@ -467,7 +471,7 @@ static size_t snapshot_rb(struct kgsl_device *device, u8 *buf,
 	header->start = 0;
 	header->end = KGSL_RB_DWORDS;
 	header->wptr = rb->wptr;
-	header->rptr = adreno_get_rptr(rb);
+	header->rptr = rb->rptr;
 	header->rbsize = KGSL_RB_DWORDS;
 	header->count = KGSL_RB_DWORDS;
 	adreno_rb_readtimestamp(adreno_dev, rb, KGSL_TIMESTAMP_QUEUED,
@@ -741,7 +745,8 @@ static size_t snapshot_global(struct kgsl_device *device, u8 *buf,
 
 	header->size = memdesc->size >> 2;
 	header->gpuaddr = memdesc->gpuaddr;
-	header->ptbase = MMU_DEFAULT_TTBR0(device);
+	header->ptbase =
+		kgsl_mmu_pagetable_get_ttbr0(device->mmu.defaultpagetable);
 	header->type = SNAPSHOT_GPU_OBJECT_GLOBAL;
 
 	memcpy(ptr, memdesc->hostptr, memdesc->size);
@@ -754,7 +759,11 @@ static void adreno_snapshot_iommu(struct kgsl_device *device,
 		struct kgsl_snapshot *snapshot)
 {
 	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
-	struct kgsl_iommu *iommu = KGSL_IOMMU_PRIV(device);
+	struct kgsl_mmu *mmu = &device->mmu;
+	struct kgsl_iommu *iommu = mmu->priv;
+
+	if (iommu == NULL)
+		return;
 
 	kgsl_snapshot_add_section(device, KGSL_SNAPSHOT_SECTION_GPU_OBJECT_V2,
 		snapshot, snapshot_global, &iommu->setstate);
@@ -837,7 +846,7 @@ void adreno_snapshot(struct kgsl_device *device, struct kgsl_snapshot *snapshot,
 			snapshot, snapshot_global,
 			&adreno_dev->pwron_fixup);
 
-	if (kgsl_mmu_get_mmutype(device) == KGSL_MMU_TYPE_IOMMU)
+	if (kgsl_mmu_get_mmutype() == KGSL_MMU_TYPE_IOMMU)
 		adreno_snapshot_iommu(device, snapshot);
 
 	/*

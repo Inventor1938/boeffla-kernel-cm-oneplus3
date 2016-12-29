@@ -938,7 +938,7 @@ static void msm_rpm_process_ack(uint32_t msg_id, int errno)
 
 	list_for_each_safe(ptr, next, &msm_rpm_wait_list) {
 		elem = list_entry(ptr, struct msm_rpm_wait_data, list);
-		if (elem && (elem->msg_id == msg_id)) {
+		if (elem->msg_id == msg_id) {
 			elem->errno = errno;
 			elem->ack_recd = true;
 			complete(&elem->ack);
@@ -948,7 +948,6 @@ static void msm_rpm_process_ack(uint32_t msg_id, int errno)
 			}
 			break;
 		}
-		elem = NULL;
 	}
 	/* Special case where the sleep driver doesn't
 	 * wait for ACKs. This would decrease the latency involved with

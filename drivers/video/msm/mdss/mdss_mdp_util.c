@@ -1010,7 +1010,7 @@ static int mdss_mdp_get_img(struct msmfb_data *img,
 	} else if (iclient) {
 		if (mdss_mdp_is_map_needed(mdata, data)) {
 			data->srcp_dma_buf = dma_buf_get(img->memory_id);
-			if (IS_ERR_OR_NULL(data->srcp_dma_buf)) {
+			if (IS_ERR(data->srcp_dma_buf)) {
 				pr_err("error on ion_import_fd\n");
 				ret = PTR_ERR(data->srcp_dma_buf);
 				data->srcp_dma_buf = NULL;
@@ -1118,9 +1118,6 @@ static int mdss_mdp_map_buffer(struct mdss_mdp_img_data *data, bool rotator,
 	int ret = -EINVAL;
 	int domain;
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
-	struct scatterlist *sg;
-	unsigned int i;
-	struct sg_table *table;
 
 	if (data->addr && data->len)
 		return 0;
