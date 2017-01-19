@@ -12,7 +12,7 @@
 
 BOEFFLA_VERSION="1.0-test-CM14.0-OnePlus3"
 
-TOOLCHAIN="/home/ivankolev/x-tools/aarch64-linux-android-6.x/bin/aarch64-linux-android-"
+TOOLCHAIN="/home/ivankolev/caf2/prebuilts/gcc/linux-x86/aarch64/mdalexca-aarch64-linux-android-6.x/bin/aarch64-linux-android-"
 ARCHITECTURE=arm64
 COMPILER_FLAGS_KERNEL=""
 COMPILER_FLAGS_MODULE=""
